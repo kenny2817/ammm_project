@@ -19,6 +19,8 @@ int M[1..N][1..N] = ...;
 range Week = 1..7;
 range Permutation_range = 1..49;
 range available_range = 2..6;
+range K_range = 1..K;
+range N_range = 1..N;
 
 // Week up time permutations
 int permutations[Permutation_range][Week] = [
@@ -44,7 +46,7 @@ int permut_cost[Permutation_range] = [
 int permut_number[available_range] = [14,28,35,42,49];
 
 // coverage power of a camera
-int CanCover[N_range][N_range][K_range];
+int CanCover[K_range][N_range][N_range];
 
 // helper to decide if p is good
 int IsValidPermut[K_range][Permutation_range]; 
@@ -55,17 +57,17 @@ execute {
     for(var k in K_range) for(var p in Permutation_range)
         IsValidPermut[k][p] = (p <= permut_number[A[k]]);
     for(var k in K_range) for(var j in N_range) for(var i in N_range)
-        CanCover[i][j][k] = ((R[k] >= M[i][j]) && (M[i][j] < 50));
+        CanCover[k][i][j] = ((R[k] >= M[i][j]) && (M[i][j] < 50));
 }
 
 // Decision variables =============================================================================
-dvar boolean x[N_range][K_range][Permutation_range];
+dvar boolean x[K_range][N_range][Permutation_range];
 
 
 // Objective function =============================================================================
 minimize
-  sum(i in N_range, k in K_range, p in Permutation_range) 
-    x[i][k][p] * (P[k] + C[k] * permut_cost[p]);
+  sum(k in K_range, i in N_range, p in Permutation_range) 
+    x[k][i][p] * (P[k] + C[k] * permut_cost[p]);
 
 
 // Constraints ====================================================================================
@@ -73,16 +75,16 @@ subject to {
   // Constraint 1: single camera
   forall(i in N_range)
     sum(k in K_range, p in Permutation_range) 
-        x[i][k][p] <= 1;
+        x[k][i][p] <= 1;
 
   // Constraint 2: Autonomy constraint
-  forall(i in N_range, k in K_range, p in Permutation_range)
-    x[i][k][p] <= IsValidPermut[k][p]; 
+  forall(k in K_range, i in N_range, p in Permutation_range)
+    x[k][i][p] <= IsValidPermut[k][p]; 
 
   // Constraint 3: Full coverage
   forall(j in N_range, d in Week)
-    sum(i in N_range, k in K_range, p in Permutation_range) 
-      (x[i][k][p] * CanCover[i][j][k] * permutations[p][d]) >= 1;
+    sum(k in K_range, i in N_range, p in Permutation_range) 
+      (x[k][i][p] * CanCover[k][i][j] * permutations[p][d]) >= 1;
 }
 
 
