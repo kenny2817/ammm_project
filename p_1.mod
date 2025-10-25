@@ -1,26 +1,51 @@
-// ** PLEASE ONLY CHANGE THIS FILE WHERE INDICATED **
-// In particular, do not change the names of the OPL variables.
 
-int             K = ...;
-int 	  P[1..K] = ...;
-int 	  R[1..K] = ...;
-int 	  A[1..K] = ...;
-int 	  C[1..K] = ...;
+int    K = ...;
+int    N = ...;
+int maxP = ...;
+int maxR = ...;
+int maxA = ...;
+int maxC = ...;
+int maxM = ...;
+range K_range = 1..K;
+range N_range = 1..N;
 
-int             N = ...;
-int M[1..N][1..N] = ...;
+int P[K_range];
+int R[K_range];
+int A[K_range];
+int C[K_range];
 
-// Define here your decision variables and
-// any other auxiliary OPL variables you need.
-// You can run an execute block if needed.
+int M[N_range][N_range];
 
+// Generation =====================================================================================
+execute {
+    Opl.srand(12345);
+
+    for(var k in K_range){
+        P[k] = 1 + Opl.rand(maxP);
+        R[k] = 1 + Opl.rand(maxR);
+        A[k] = 2 + Opl.rand(maxA);
+        C[k] = 1 + Opl.rand(maxC);
+    }
+
+    for(var i in N_range) for(var j in N_range)
+        M[i][j] = (i == j) ? 0 : (1 + Opl.rand(maxM));
+        
+	writeln("K:",K," N:",N);
+
+	writeln();
+	writeln("P:",P);
+	writeln("R:",R);
+	writeln("A:",A);
+	writeln("C:",C);
+
+	writeln();
+	writeln("M:",M);
+}
 
 // Preprocessing ==================================================================================
 range Week = 1..7;
 range Permutation_range = 1..49;
 range available_range = 2..6;
-range K_range = 1..K;
-range N_range = 1..N;
 
 // Week up time permutations
 int permutations[Permutation_range][Week] = [
@@ -89,7 +114,8 @@ subject to {
 
 
 execute {
-    // writeln(x)
-    // writeln(CanCover);
+	for (var i in N_range) for(var k in K_range) for(var p in Permutation_range)
+		if (x[k][i][p] == 1)
+			writeln("crossing:",i," model:",k,permutations[p]);
 }
 
