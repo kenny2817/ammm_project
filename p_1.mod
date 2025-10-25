@@ -1,4 +1,4 @@
-
+// Parameters =====================================================================================
 int    K = ...;
 int    N = ...;
 int maxP = ...;
@@ -77,7 +77,7 @@ int CanCover[K_range][N_range][N_range];
 int IsValidPermut[K_range][Permutation_range]; 
 
 execute {
-    cplex.threads = 1;
+    cplex.threads = 4;
 
     for(var k in K_range) for(var p in Permutation_range)
         IsValidPermut[k][p] = (p <= permut_number[A[k]]);
