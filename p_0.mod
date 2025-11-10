@@ -1,11 +1,11 @@
 // Parameters =====================================================================================
-int             K = ...;
-int 	  P[1..K] = ...;
-int 	  R[1..K] = ...;
-int 	  A[1..K] = ...;
-int 	  C[1..K] = ...;
+int K             = ...;
+int P[1..K]       = ...;
+int R[1..K]       = ...;
+int A[1..K]       = ...;
+int C[1..K]       = ...;
 
-int             N = ...;
+int N             = ...;
 int M[1..N][1..N] = ...;
 
 // Preprocessing ==================================================================================
@@ -27,32 +27,47 @@ int permutations[Permutation_range][Week] = [
 ];
 
 // cost in days
-int permut_cost[Permutation_range] = [
-    2,2,2,2,2,2,2,
-    4,4,4,4,4,4,4,
-    3,3,3,3,3,3,3,
-    5,5,5,5,5,5,5,
-    4,4,4,4,4,4,4,
-    5,5,5,5,5,5,5,
-    6,6,6,6,6,6,6
-];
+int permut_cost[p in Permutation_range] = sum(d in Week) permutations[p][d];
+// int permut_cost[Permutation_range] = [
+//     2,2,2,2,2,2,2,
+//     4,4,4,4,4,4,4,
+//     3,3,3,3,3,3,3,
+//     5,5,5,5,5,5,5,
+//     4,4,4,4,4,4,4,
+//     5,5,5,5,5,5,5,
+//     6,6,6,6,6,6,6
+// ];
 
 // number of permutation for each availability
 int permut_number[available_range] = [14,28,35,42,49];
 
 // coverage power of a camera
-int CanCover[K_range][N_range][N_range];
+int CanCover[k in K_range][i in N_range][j in N_range] = ((R[k] >= M[i][j]) && (M[i][j] < 50));
 
 // helper to decide if p is good
-int IsValidPermut[K_range][Permutation_range]; 
+int IsValidPermut[k in K_range][p in Permutation_range] = (p <= permut_number[A[k]]);
 
 execute {
     cplex.threads = 1;
 
-    for(var k in K_range) for(var p in Permutation_range)
-        IsValidPermut[k][p] = (p <= permut_number[A[k]]);
-    for(var k in K_range) for(var j in N_range) for(var i in N_range)
-        CanCover[k][i][j] = ((R[k] >= M[i][j]) && (M[i][j] < 50));
+    for (var k in K_range) {
+        var sumCanCover = 0;
+        for (var i in N_range)
+            for (var j in N_range)
+                sumCanCover += CanCover[k][i][j];
+
+        writeln(
+          "k:", k, 
+          " | P:", P[k], 
+          " R:", R[k], 
+          " A:", A[k], 
+          " C:", C[k], 
+          " | sum(CanCover):", sumCanCover
+        );
+
+        writeln(CanCover[k]);
+    }
+    writeln();
 }
 
 // Decision variables =============================================================================
