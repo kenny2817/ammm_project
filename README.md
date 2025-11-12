@@ -3,7 +3,7 @@
 ## To Do List
 
 - [ ] State the problem formally (i/o, aux sets of indices, obj function)
-- [ ] Build ILP model, implement in OPL
+- [ x ] Build ILP model, implement in OPL
 - [ ] Design three heuristic algorithms
     - [ ] greedy
     - [ ] greedy + local search
