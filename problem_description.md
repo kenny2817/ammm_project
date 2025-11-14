@@ -10,7 +10,7 @@
 - `maxR` - maximum range of a model
 - `maxA` - maximum number of consecutive days a camera can be kept on
 - `maxC` - maximum cost per day of a model
-- `maxM` - maximum visibility of a crossing compared to other corrsing
+- `maxM` - maximum visibility of a crossing compared to other crossing
 
 ### Internal
 
@@ -28,7 +28,7 @@
 - `can_cover` - for aeach camera what can be covered - indexes: k, n, n
 - `permut_valid` - uses permut_number to preprocess the available permutations - indexes: k, p
 
-## Decison Variables
+## Decision Variables
 
 - `x` - boolean - which model, which crossing, which permutation is active - indexes: k, n, p
 
