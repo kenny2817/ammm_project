@@ -1,11 +1,9 @@
 // Parameters =====================================================================================
+int SEED = ...;
 int    K = ...;
 int    N = ...;
 int maxP = ...;
-int maxR = ...;
-int maxA = ...;
 int maxC = ...;
-int maxM = ...;
 range K_range = 1..K;
 range N_range = 1..N;
 
@@ -18,17 +16,17 @@ int M[N_range][N_range];
 
 // Generation =====================================================================================
 execute {
-    Opl.srand(12345);
+    Opl.srand(SEED);
 
     for(var k in K_range){
         P[k] = 1 + Opl.rand(maxP);
-        R[k] = 1 + Opl.rand(maxR);
-        A[k] = 2 + Opl.rand(maxA);
+        R[k] = 1 + Opl.rand(49);
+        A[k] = 2 + Opl.rand(6);
         C[k] = 1 + Opl.rand(maxC);
     }
 
     for(var i in N_range) for(var j in N_range)
-        M[i][j] = (i == j) ? 0 : (1 + Opl.rand(maxM));
+        M[i][j] = (i == j) ? 0 : (1 + Opl.rand(50));
         
 	writeln("K:",K," N:",N);
 
