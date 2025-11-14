@@ -1,8 +1,6 @@
+SEED = 12345;
 K = 3;
 N = 10;
 
 maxP = 1000;
-maxR = 49;
-maxA = 6;
 maxC = 100;
-maxM = 50;
