@@ -1,3 +1,8 @@
+
+execute {
+    cplex.threads = 1;
+}
+
 // Parameters =====================================================================================
 int K             = ...;
 int P[1..K]       = ...;
@@ -47,32 +52,8 @@ int CanCover[k in K_range][i in N_range][j in N_range] = ((R[k] >= M[i][j]) && (
 // helper to decide if p is good
 int IsValidPermut[k in K_range][p in Permutation_range] = (p <= permut_number[A[k]]);
 
-execute {
-    cplex.threads = 1;
-
-    for (var k in K_range) {
-        var sumCanCover = 0;
-        for (var i in N_range)
-            for (var j in N_range)
-                sumCanCover += CanCover[k][i][j];
-
-        writeln(
-          "k:", k, 
-          " | P:", P[k], 
-          " R:", R[k], 
-          " A:", A[k], 
-          " C:", C[k], 
-          " | sum(CanCover):", sumCanCover
-        );
-
-        writeln(CanCover[k]);
-    }
-    writeln();
-}
-
 // Decision variables =============================================================================
 dvar boolean x[K_range][N_range][Permutation_range];
-
 
 // Objective function =============================================================================
 minimize
@@ -101,6 +82,6 @@ subject to {
 execute {
 	for (var i in N_range) for(var k in K_range) for(var p in Permutation_range)
 		if (x[k][i][p] == 1)
-			writeln("crossing:",i," model:",k,permutations[p]);
+			writeln("crossing:",i," model:",k,"\t",permutations[p]);
 }
 

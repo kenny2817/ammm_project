@@ -25,7 +25,7 @@
 - `permutations` - hardcoded all the permutations available based on the problem specification - indexes: p, w
 - `permut_cost` - the cost in terms of days of each permutation, basically the sum of up days - index: p
 - `permut_number` - number of permutations available based on the availability - index: a
-- `can_cover` - for aeach camera what can be covered - indexes: k, n, n
+- `can_cover` - for each camera what can be covered - indexes: k, n, n
 - `permut_valid` - uses permut_number to preprocess the available permutations - indexes: k, p
 
 ## Decision Variables
