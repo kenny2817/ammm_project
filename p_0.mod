@@ -33,15 +33,6 @@ int permutations[Permutation_range][Week] = [
 
 // cost in days
 int permut_cost[p in Permutation_range] = sum(d in Week) permutations[p][d];
-// int permut_cost[Permutation_range] = [
-//     2,2,2,2,2,2,2,
-//     4,4,4,4,4,4,4,
-//     3,3,3,3,3,3,3,
-//     5,5,5,5,5,5,5,
-//     4,4,4,4,4,4,4,
-//     5,5,5,5,5,5,5,
-//     6,6,6,6,6,6,6
-// ];
 
 // number of permutation for each availability
 int permut_number[available_range] = [14,28,35,42,49];
