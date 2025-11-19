@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, model_validator
 from parser import parse_dat_file
+import sys
 
 
 class GreedySolver(BaseModel):
@@ -51,13 +52,6 @@ class GreedySolver(BaseModel):
 
         return first + "\nM: [\n" + last + "\n]"
 
-    # function to compute combinations of the patterns
-    # that cover the whole weekly schedule
-    def weekly_cover(
-        self,
-    ):
-        return
-
     # A list of tuple[camera_model, pattern_index, crossing]
     def simple_solver(self, cameras: list[tuple[int, int, int]]):
         covered_crossings: set = set()
@@ -101,6 +95,24 @@ class GreedySolver(BaseModel):
         return purchase_cost + operational_cost
 
     def greedy(self) -> None:
+        # idea: rappresentiamo ogni videocamera come una retta y = mx + q,
+        # dove q è il costo di acquisto della camera, e m è il costo per giorno 
+        # di utilizzo della stessa camera. A parità di m, è meglio scegliere 
+        # la camera con un q basso. 
+        old_purchase = sys.maxsize
+        camera = -1
+        range_c = 0
+        cam_value: list[tuple[int, float]] = []
+        for k in range(self.K):
+             purchase = self.P[k] 
+             if purchase < old_purchase:
+                 old_purchase = purchase
+                 camera = k
+             elif purchase == old_purchase:
+                 if self.C[k] < self.C[camera]:
+                     camera = k
+             value = covering_range / cost
+
 
         return
 
