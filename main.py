@@ -44,7 +44,7 @@ class GreedySolver(BaseModel):
         self.coverage = [[0 for _ in range(7)] for _ in range(self.N)]
 
         return self
-    
+
     def print_costs(self, cameras: list[tuple[int, int, int]]):
         
         cost = 0
@@ -200,7 +200,6 @@ class GreedySolver(BaseModel):
                 print(f"Only covered {current_covered}/{total_slots_to_cover} slots.")
                 break
 
-        print(self.coverage)
         return solution
 
     def local_search_1(self, solution: list[tuple[int, int, int]]) -> list[tuple[int, int, int]]:
@@ -267,11 +266,11 @@ if __name__ == "__main__":
     print(solver)
     solution = solver.greedy()
 
-    solver.print_costs(solution)
+    print(solution)
     try:
         cost = solver.simple_solver(solution)
         print(f"Valid solution. Total cost: {cost}")
     except ValueError as e:
         print(f"Invalid solution: {e}")
 
-    print(solver.local_search_1(solution))
+    solver.local_search_1(solution)
