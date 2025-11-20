@@ -51,16 +51,21 @@ class GreedySolver(BaseModel):
 
     def print_costs(self, cameras: list[tuple[int, int, int]]):
         
-        cost = 0
-        for (k, p, c) in cameras:
-            cost += self.P[k] + sum(self.pattern[d][p] for d in range(7))*self.C[k] 
-            # print pattern
-            pattern_str = ""
-            for d in range(7):
-                pattern_str += str(self.pattern[d][p])
-            print(f"camera: {k}, pattern {p}: {pattern_str}, crossing: {c}")
+        try:
+            cost = solver.simple_solver(solution)
+            print(f"Valid solution.")
+            for (k, p, c) in cameras:
+                cost += self.P[k] + sum(self.pattern[d][p] for d in range(7))*self.C[k] 
+                # print pattern
+                pattern_str = ""
+                for d in range(7):
+                    pattern_str += str(self.pattern[d][p])
+                print(f"camera: {k}, pattern {p}: {pattern_str}, crossing: {c}")
+            print(f"Total cost: {cost}")
+        except ValueError as e:
+            print(f"Invalid solution: {e}")
+            cost = 0
 
-        print(f"Total cost: {cost}")
 
 
     def __str__(self):
@@ -266,10 +271,5 @@ if __name__ == "__main__":
     solution = solver.greedy()
 
     solver.print_costs(solution)
-    try:
-        cost = solver.simple_solver(solution)
-        print(f"Valid solution. Total cost: {cost}")
-    except ValueError as e:
-        print(f"Invalid solution: {e}")
 
     solver.print_costs(solver.local_search_1(solution))
