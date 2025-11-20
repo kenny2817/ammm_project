@@ -203,22 +203,64 @@ class GreedySolver(BaseModel):
         print(self.coverage)
         return solution
 
-    def local_search_1(self, solution: list[tuple[int, int, int]]):
-        a: list[dict[int, list[int]]] = [defaultdict(list) for _ in range(self.N)]
+    def local_search_1(self, solution: list[tuple[int, int, int]]) -> list[tuple[int, int, int]]:
+        a: list[dict[int, list[int]]] = [defaultdict(set) for _ in range(self.N)]
         for n in range(self.N):
             o: dict[int, list[int]] = defaultdict(list)
             for m in range(self.N):
                 o[self.M[n][m]].append(m)
-            o.pop(0)
+            o.pop(0, None)
+            o.pop(50, None)
             sorted_o = dict(sorted(o.items()))
             
             for k in range(self.K):
                 r = self.R[k]
                 for dist, v in sorted_o.items():
                     if dist == r:
-                        a[n][r] += v
+                        a[n][r].update(v)
+
+        range_to_model = defaultdict(list)
+        for model in range(self.K):
+            range_to_model[self.R[model]].append(model)
+        
+        target_index = [
+            [0,2],[1,3],[2,4],[3,5],[4,6],[5,0],[6,1],
+            [3,5],[4,6],[5,0],[6,1],[0,2],[1,3],[2,4],
+            [0,3],[1,4],[2,5],[3,6],[4,0],[5,1],[6,2],
+            [0,2,4],[1,3,5],[2,4,6],[3,5,0],[4,6,1],[5,0,2],[6,1,3],
+            [0,2,3,5],[1,3,4,6],[2,4,5,0],[3,5,6,1],[4,6,0,2],[5,0,1,3],[6,1,2,4]
+        ]
+        target_patterns = [
+            [1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[0,6],
+            [7,10],[8,11],[9,12],[10,13],[11,7],[12,8],[13,9],
+            [15,14],[16,15],[17,16],[18,17],[19,18],[20,19],[21,20],
+            [29,10,28],[30,11,29],[31,12,30],[32,13,31],[33,7,32],[34,8,33],[35,9,34],
+            [36,28,32,35],[37,29,33,36],[38,30,34,37],[39,31,28,38],[40,32,29,39],[41,33,30,40],[42,34,31,41]
+        ]
+        # target_availability = [
+        #     [2,2],[2,2],[2,2],[2,2],[2,2],[2,2],[2,2],
+        #     [2,2],[2,2],[2,2],[2,2],[2,2],[2,2],[2,2],
+        #     [3,3],[3,3],[3,3],[3,3],[3,3],[3,3],[3,3],
+        #     [4,2,4],[4,2,4],[4,2,4],[4,2,4],[4,2,4],[4,2,4],[4,2,4],
+        #     [5,3,3,5],[5,3,3,5],[5,3,3,5],[5,3,3,5],[5,3,3,5],[5,3,3,5],[5,3,3,5]
+        # ]
+
+        solution_out = solution.copy()
+        # try to reduce patterns length
+        for i, (model, pattern, crossing) in enumerate(solution):
+            if pattern > 13: # only patterns with active time > 2
+                mapping = a[crossing][self.R[model]]
+                for day, target in zip(target_index[pattern - 14], target_patterns[pattern - 14]):
+                    if all(self.coverage[covered][day] > 1 for covered in mapping): # all covered more than once
+                        days_active = 0 # cancer of society
+                        for d in range(7):
+                            if self.pattern[d][target] == 1:
+                                days_active += 1
+                        best_k = min(range(self.K), key=lambda k: self.P[k] + days_active * self.C[k])
+                        solution_out[i] = (best_k, target, crossing)
 
 
+        return solution_out
 
 if __name__ == "__main__":
     solver = GreedySolver()
@@ -232,4 +274,4 @@ if __name__ == "__main__":
     except ValueError as e:
         print(f"Invalid solution: {e}")
 
-    solver.local_search_1(solution)
+    print(solver.local_search_1(solution))
