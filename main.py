@@ -2,7 +2,7 @@ from collections import defaultdict
 from typing import DefaultDict
 from pydantic import BaseModel, Field, model_validator, computed_field
 from parser import parse_dat_file
-
+from math import pow
 
 class GreedySolver(BaseModel):
     K: int = 0
@@ -24,6 +24,7 @@ class GreedySolver(BaseModel):
         [0,0,0,0,1,1,0, 1,1,0,0,1,1,0, 0,0,0,1,1,1,0, 1,1,1,0,1,1,0, 0,1,1,1,1,1,0, 1,1,1,1,1,1,0, 1,1,1,1,1,1,0],  # Day 6
         [0,0,0,0,0,1,1, 0,1,1,0,0,1,1, 0,0,0,0,1,1,1, 0,1,1,1,0,1,1, 0,0,1,1,1,1,1, 0,1,1,1,1,1,1, 0,1,1,1,1,1,1]   # Day 7
     ]
+
     pattern_cost: list[int] = Field(default_factory=list)
 
     pattern_number: list = [14, 28, 35, 42, 49]
@@ -32,7 +33,7 @@ class GreedySolver(BaseModel):
     @model_validator(mode="after")
     def deserializer(self) -> "GreedySolver":
         
-        data = parse_dat_file("data.dat")
+        data = parse_dat_file("project.2.dat")
         self.K = data["K"]
         self.N = data["N"]
         self.P = data["P"]
@@ -46,13 +47,13 @@ class GreedySolver(BaseModel):
 
         num_patterns = len(self.pattern[0])
         self.pattern_cost: list = [sum(self.pattern[d][p] for d in range(7)) for p in range(num_patterns)]
-
+        
         return self
 
     def print_costs(self, cameras: list[tuple[int, int, int]]):
-        
+        cost = 0
         try:
-            cost = solver.simple_solver(solution)
+            _ = solver.simple_solver(solution)
             print(f"Valid solution.")
             for (k, p, c) in cameras:
                 cost += self.P[k] + sum(self.pattern[d][p] for d in range(7))*self.C[k] 
@@ -63,6 +64,13 @@ class GreedySolver(BaseModel):
                 print(f"camera: {k}, pattern {p}: {pattern_str}, crossing: {c}")
             print(f"Total cost: {cost}")
         except ValueError as e:
+            for (k, p, c) in cameras:
+                cost += self.P[k] + sum(self.pattern[d][p] for d in range(7))*self.C[k] 
+                # print pattern
+                pattern_str = ""
+                for d in range(7):
+                    pattern_str += str(self.pattern[d][p])
+                print(f"camera: {k}, pattern {p}: {pattern_str}, crossing: {c}")
             print(f"Invalid solution: {e}")
             cost = 0
 
@@ -126,87 +134,113 @@ class GreedySolver(BaseModel):
         current_covered = 0
         solution: list[tuple[int, int, int]] = []
         used_locations = set()
+
+        weight_list: list = []
+        for n in range(self.N):
+            weight_list.append(pow(sum(self.M[n]), 2))
         
-        while current_covered < total_slots_to_cover:
-            current_best_ratio = float('inf')
-            best_move  = None
+        max_values: set = set()
+        for n in range(self.N):
+            max_values.update(self.M[n])
 
-            # loop per ogni incrocio dove voglio posizionare la mia camera
-            for loc in range(self.N):
-                if loc in used_locations:
-                    continue
+        max_values.discard(0)
 
-                # per ogni camera
-                for cam_index in range(self.K):
+        max_list = list(max_values)
 
-                    # l'autonomia è da 2 a 6, risolvo l'offset partendo da zero
-                    autonomy = self.A[cam_index] - 2
-                    if 0 <= autonomy < len(self.pattern_number):
-                        max_pattern_index = self.pattern_number[autonomy]
-                    else:
+        sorted_max_list = sorted(max_list, reverse=True)
+
+        for max_elem in sorted_max_list: 
+            while current_covered < total_slots_to_cover:
+                # coverage_mask: list[list[bool]] = [[(max(self.M[n]) < max_elem or self.coverage[n][d] > 0) for d in range(7)] for n in range(self.N)]
+                # for n in range(self.N):
+                #     print(coverage_mask[n])
+                # print()
+
+                for n in range(self.N):
+                    print(self.coverage[n])
+                print()
+
+                current_best_ratio = float('inf')
+                best_move  = None
+
+                # loop per ogni incrocio dove voglio posizionare la mia camera
+                for loc in range(self.N):
+                    if loc in used_locations:
                         continue
 
-                    # salvo gli incroci raggiungibili dalla videocamera con indice cam_index
-                    crossing_reachable: list = []
+                    # per ogni camera
+                    for cam_index in range(self.K):
+
+                        # l'autonomia è da 2 a 6, risolvo l'offset partendo da zero
+                        autonomy = self.A[cam_index] - 2
+                        if 0 <= autonomy < len(self.pattern_number):
+                            max_pattern_index = self.pattern_number[autonomy]
+                        else:
+                            continue
+
+                        # salvo gli incroci raggiungibili dalla videocamera con indice cam_index
+                        crossing_reachable: list = []
+                        for target in range(self.N):
+                            if (self.M[loc][target] <= self.R[cam_index]) and (self.M[loc][target] < 50):
+                                crossing_reachable.append(target)
+                                
+                        if not crossing_reachable:
+                            continue
+
+                        # verifico per pattern, durante tutta la settimana,
+                        # il migliore gain e quindi seleziono la migliore scelta
+                        # data da cam_index, pattern_index e loc (incrocio dove si trova la camera)
+                        for pattern_index in range(max_pattern_index):
+                            days_active = self.pattern_cost[pattern_index]
+
+                            move_cost = self.P[cam_index] + (days_active * self.C[cam_index])
+
+                            gain = 0
+
+                            for d in range(7):
+                                if self.pattern[d][pattern_index] == 1:
+                                    for target in crossing_reachable:
+                                        if self.coverage[target][d] == 0:
+                                            gain += weight_list[target]
+
+                            if gain > 0:
+                                ratio = move_cost / gain
+                                # print(f"pattern {pattern_index}, ratio: {ratio} camera: {cam_index} incrocio: {loc}")
+                                # se il ratio è migliore di quello trovato precedentemente
+                                # scelgo questa combinazione di camera, pattern e incrocio
+                                if ratio < current_best_ratio:
+                                    
+                                    current_best_ratio = ratio
+                                    best_move = (cam_index, pattern_index, loc, gain)
+
+                if best_move:
+                    best_cam, best_pattern, best_loc, _ = best_move
+
+                    # aggiungo la combinazione all'insieme di soluzioni
+                    solution.append((best_cam, best_pattern, best_loc))
+                    used_locations.add(best_loc)
+
+                    reachable = []
+                    # aggiungo ai reachable gli incroci coperti dalla videocamera
+                    # posta all'incrocio best_loc
                     for target in range(self.N):
-                        if (self.M[loc][target] <= self.R[cam_index]) and (self.M[loc][target] < 50):
-                            crossing_reachable.append(target)
-                            
-                    if not crossing_reachable:
-                        continue
+                        if (self.M[best_loc][target] <= self.R[best_cam]) and (self.M[best_loc][target] < 50): 
+                            reachable.append(target)
 
-                    # verifico per pattern, durante tutta la settimana,
-                    # il migliore gain e quindi seleziono la migliore scelta
-                    # data da cam_index, pattern_index e loc (incrocio dove si trova la camera)
-                    for pattern_index in range(max_pattern_index):
-                        days_active = self.pattern_cost[pattern_index]
-
-                        move_cost = self.P[cam_index] + (days_active * self.C[cam_index])
-
-                        gain = 0
-
-                        for d in range(7):
-                            if self.pattern[d][pattern_index] == 1:
-                                for target in crossing_reachable:
-                                    if self.coverage[target][d] == 0:
-                                        gain += 1
-
-                        if gain > 0:
-                            ratio = move_cost / gain
-                            # se il ratio è migliore di quello trovato precedentemente
-                            # scelgo questa combinazione di camera, pattern e incrocio
-                            if ratio < current_best_ratio:
-                                current_best_ratio = ratio
-                                best_move = (cam_index, pattern_index, loc, gain)
-
-            if best_move:
-                best_cam, best_pattern, best_loc, _ = best_move
-
-                # aggiungo la combinazione all'insieme di soluzioni
-                solution.append((best_cam, best_pattern, best_loc))
-                used_locations.add(best_loc)
-
-                reachable = []
-                # aggiungo ai reachable gli incroci coperti dalla videocamera
-                # posta all'incrocio best_loc
-                for target in range(self.N):
-                    if (self.M[best_loc][target] <= self.R[best_cam]) and (self.M[best_loc][target] < 50): 
-                        reachable.append(target)
-
-                for d in range(7):
-                    if self.pattern[d][best_pattern] == 1:
-                        # per ogni incrocio coperto (cioè presente in reachable)
-                        # se non è presente in coverage lo aggiungo e incremento di 1
-                        # il contatore dei current_covered
-                        for target in reachable:
-                            if self.coverage[target][d] == 0:
-                                current_covered += 1
-                            self.coverage[target][d] += 1
-            else:
-                # se non sono riuscito a trovare una best move significa che
-                # non avrò coperto alcuni incrocio in alcuni giorni della settimana
-                print(f"Only covered {current_covered}/{total_slots_to_cover} slots.")
-                break
+                    for d in range(7):
+                        if self.pattern[d][best_pattern] == 1:
+                            # per ogni incrocio coperto (cioè presente in reachable)
+                            # se non è presente in coverage lo aggiungo e incremento di 1
+                            # il contatore dei current_covered
+                            for target in reachable:
+                                if self.coverage[target][d] == 0:
+                                    current_covered += 1
+                                self.coverage[target][d] += 1
+                else:
+                    # se non sono riuscito a trovare una best move significa che
+                    # non avrò coperto alcuni incrocio in alcuni giorni della settimana
+                    print(f"Only covered {current_covered}/{total_slots_to_cover} slots.")
+                    break
 
         return solution
 
