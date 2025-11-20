@@ -1,6 +1,6 @@
 from collections import defaultdict
 from typing import DefaultDict
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, computed_field
 from parser import parse_dat_file
 
 
@@ -26,6 +26,7 @@ class GreedySolver(BaseModel):
     ]
 
     pattern_number: list = [14, 28, 35, 42, 49]
+    coverage: list[list[int]] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def deserializer(self) -> "GreedySolver":
@@ -40,7 +41,10 @@ class GreedySolver(BaseModel):
 
         self.M = data["M"]
 
+        self.coverage = [[0 for _ in range(7)] for _ in range(self.N)]
+
         return self
+
 
     def __str__(self):
         first = f"K = {self.K} N = {self.N} P = {self.P} R = {self.R} A = {self.A} C = {self.C}"
@@ -66,7 +70,7 @@ class GreedySolver(BaseModel):
             if covered_crossings_len == len(covered_crossings):
                 raise ValueError(f"Crossing {crossing} selected twice")
 
-        coverage = [set() for _ in range(7)]
+        current_coverage = [set() for _ in range(7)]
 
         for camera, pattern_idx, crossing in cameras:
             # controlliamo la validità del pattern per la camera 
@@ -81,12 +85,12 @@ class GreedySolver(BaseModel):
                 if self.pattern[day][pattern_idx] == 1:
                     for i in range(self.N):
                         if self.R[camera] >= self.M[crossing][i] and self.M[crossing][i] < 50:
-                            coverage[day].add(i)
+                            current_coverage[day].add(i)
 
         # verify complete coverage (all crossing must be always monitored)
         all_crossing = set(range(self.N))
         for day in range(7):
-            if coverage[day] != all_crossing:
+            if current_coverage[day] != all_crossing:
                 raise ValueError(f"Day {day+1} not fully covered")
 
         # cost = purchase + operational, where operational is C times number of the days on
@@ -96,7 +100,6 @@ class GreedySolver(BaseModel):
         return purchase_cost + operational_cost
 
     def greedy(self, penalty_factor: float = 0.5) -> list[tuple[int, int, int]]:
-        coverage = [[False for _ in range(7)] for _ in range(self.N)]
         total_slots_to_cover = self.N * 7
         current_covered = 0
         solution: list[tuple[int, int, int]] = []
@@ -142,21 +145,15 @@ class GreedySolver(BaseModel):
                         move_cost = self.P[cam_index] + (days_active * self.C[cam_index])
 
                         gain = 0
-                        overlap = 0
 
                         for d in range(7):
                             if self.pattern[d][pattern_index] == 1:
                                 for target in crossing_reachable:
-                                    if not coverage[target][d]:
+                                    if self.coverage[target][d] == 0:
                                         gain += 1
-                                    else:
-                                        overlap += 1
 
                         if gain > 0:
-                            waste_ratio = overlap / (gain + overlap)
-                            adjusted_cost = move_cost * (1 + (penalty_factor * waste_ratio))
-
-                            ratio = adjusted_cost / gain
+                            ratio = move_cost / gain
                             # se il ratio è migliore di quello trovato precedentemente
                             # scelgo questa combinazione di camera, pattern e incrocio
                             if ratio < current_best_ratio:
@@ -183,9 +180,9 @@ class GreedySolver(BaseModel):
                         # se non è presente in coverage lo aggiungo e incremento di 1
                         # il contatore dei current_covered
                         for target in reachable:
-                            if not coverage[target][d]:
-                                coverage[target][d] = True
+                            if self.coverage[target][d] == 0:
                                 current_covered += 1
+                            self.coverage[target][d] += 1
             else:
                 # se non sono riuscito a trovare una best move significa che
                 # non avrò coperto alcuni incrocio in alcuni giorni della settimana
@@ -205,15 +202,10 @@ class GreedySolver(BaseModel):
             
             for k in range(self.K):
                 r = self.R[k]
-                print("k, r")
-                print(k, r)
                 for dist, v in sorted_o.items():
-                    print(dist,v)
                     if dist == r:
                         a[n][r] += v
 
-        print(a[0][1])
-        print(a[0][2])
 
 
 if __name__ == "__main__":
