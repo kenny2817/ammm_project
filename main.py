@@ -24,6 +24,7 @@ class GreedySolver(BaseModel):
         [0,0,0,0,1,1,0, 1,1,0,0,1,1,0, 0,0,0,1,1,1,0, 1,1,1,0,1,1,0, 0,1,1,1,1,1,0, 1,1,1,1,1,1,0, 1,1,1,1,1,1,0],  # Day 6
         [0,0,0,0,0,1,1, 0,1,1,0,0,1,1, 0,0,0,0,1,1,1, 0,1,1,1,0,1,1, 0,0,1,1,1,1,1, 0,1,1,1,1,1,1, 0,1,1,1,1,1,1]   # Day 7
     ]
+    pattern_cost: list[int] = Field(default_factory=list)
 
     pattern_number: list = [14, 28, 35, 42, 49]
     coverage: list[list[int]] = Field(default_factory=list)
@@ -43,6 +44,9 @@ class GreedySolver(BaseModel):
 
         self.coverage = [[0 for _ in range(7)] for _ in range(self.N)]
 
+        num_patterns = len(self.pattern[0])
+        self.pattern_cost: list = [sum(self.pattern[d][p] for d in range(7)) for p in range(num_patterns)]
+
         return self
 
     def print_costs(self, cameras: list[tuple[int, int, int]]):
@@ -54,7 +58,9 @@ class GreedySolver(BaseModel):
             pattern_str = ""
             for d in range(7):
                 pattern_str += str(self.pattern[d][p])
-            print(f"camera: {c}, pattern {p}: {pattern_str}, crossing: {c}")
+            print(f"camera: {k}, pattern {p}: {pattern_str}, crossing: {c}")
+
+        print(f"Total cost: {cost}")
 
 
     def __str__(self):
@@ -148,10 +154,7 @@ class GreedySolver(BaseModel):
                     # il migliore gain e quindi seleziono la migliore scelta
                     # data da cam_index, pattern_index e loc (incrocio dove si trova la camera)
                     for pattern_index in range(max_pattern_index):
-                        days_active = 0
-                        for d in range(7):
-                            if self.pattern[d][pattern_index] == 1:
-                                days_active += 1
+                        days_active = self.pattern_cost[pattern_index]
 
                         move_cost = self.P[cam_index] + (days_active * self.C[cam_index])
 
@@ -251,11 +254,7 @@ class GreedySolver(BaseModel):
                 mapping = a[crossing][self.R[model]]
                 for day, target in zip(target_index[pattern - 14], target_patterns[pattern - 14]):
                     if all(self.coverage[covered][day] > 1 for covered in mapping): # all covered more than once
-                        days_active = 0 # cancer of society
-                        for d in range(7):
-                            if self.pattern[d][target] == 1:
-                                days_active += 1
-                        best_k = min(range(self.K), key=lambda k: self.P[k] + days_active * self.C[k])
+                        best_k = min(range(self.K), key=lambda k: self.P[k] + self.pattern_cost[target] * self.C[k])
                         solution_out[i] = (best_k, target, crossing)
 
 
@@ -266,11 +265,11 @@ if __name__ == "__main__":
     print(solver)
     solution = solver.greedy()
 
-    print(solution)
+    solver.print_costs(solution)
     try:
         cost = solver.simple_solver(solution)
         print(f"Valid solution. Total cost: {cost}")
     except ValueError as e:
         print(f"Invalid solution: {e}")
 
-    solver.local_search_1(solution)
+    solver.print_costs(solver.local_search_1(solution))
