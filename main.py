@@ -1,6 +1,7 @@
+from collections import defaultdict
+from typing import DefaultDict
 from pydantic import BaseModel, Field, model_validator
 from parser import parse_dat_file
-import sys
 
 
 class GreedySolver(BaseModel):
@@ -94,7 +95,7 @@ class GreedySolver(BaseModel):
 
         return purchase_cost + operational_cost
 
-    def greedy(self) -> list[tuple[int, int, int]]:
+    def greedy(self, penalty_factor: float = 0.5) -> list[tuple[int, int, int]]:
         coverage = [[False for _ in range(7)] for _ in range(self.N)]
         total_slots_to_cover = self.N * 7
         current_covered = 0
@@ -141,14 +142,21 @@ class GreedySolver(BaseModel):
                         move_cost = self.P[cam_index] + (days_active * self.C[cam_index])
 
                         gain = 0
+                        overlap = 0
+
                         for d in range(7):
                             if self.pattern[d][pattern_index] == 1:
                                 for target in crossing_reachable:
                                     if not coverage[target][d]:
                                         gain += 1
+                                    else:
+                                        overlap += 1
 
                         if gain > 0:
-                            ratio = move_cost / gain
+                            waste_ratio = overlap / (gain + overlap)
+                            adjusted_cost = move_cost * (1 + (penalty_factor * waste_ratio))
+
+                            ratio = adjusted_cost / gain
                             # se il ratio è migliore di quello trovato precedentemente
                             # scelgo questa combinazione di camera, pattern e incrocio
                             if ratio < current_best_ratio:
@@ -186,6 +194,27 @@ class GreedySolver(BaseModel):
 
         return solution
 
+    def local_search_1(self, solution: list[tuple[int, int, int]]):
+        a: list[dict[int, list[int]]] = [defaultdict(list) for _ in range(self.N)]
+        for n in range(self.N):
+            o: dict[int, list[int]] = defaultdict(list)
+            for m in range(self.N):
+                o[self.M[n][m]].append(m)
+            o.pop(0)
+            sorted_o = dict(sorted(o.items()))
+            
+            for k in range(self.K):
+                r = self.R[k]
+                print("k, r")
+                print(k, r)
+                for dist, v in sorted_o.items():
+                    print(dist,v)
+                    if dist == r:
+                        a[n][r] += v
+
+        print(a[0][1])
+        print(a[0][2])
+
 
 if __name__ == "__main__":
     solver = GreedySolver()
@@ -199,3 +228,4 @@ if __name__ == "__main__":
     except ValueError as e:
         print(f"Invalid solution: {e}")
 
+    solver.local_search_1(solution)
