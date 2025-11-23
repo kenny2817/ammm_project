@@ -40,16 +40,7 @@ class GreedySolver(BaseModel):
 
     @model_validator(mode="after")
     def deserializer(self) -> "GreedySolver":
-        
-        data = parse_dat_file(self.filename)
-        self.K = data["K"]
-        self.N = data["N"]
-        self.P = data["P"]
-        self.R = data["R"]
-        self.A = data["A"]
-        self.C = data["C"]
-
-        self.M = data["M"]
+        self.get_from_file()
 
         self.coverage = [[0 for _ in range(7)] for _ in range(self.N)]
 
@@ -69,11 +60,10 @@ class GreedySolver(BaseModel):
                 distance_crossings[self.M[n][m]].append(m)
             # distance_crossings.pop(0, None)
             distance_crossings.pop(50, None)
-            sorted_distance_crossing = dict(sorted(distance_crossings.items()))
             
             for k in range(self.K):
                 r = self.R[k]
-                for dist, v in sorted_distance_crossing.items():
+                for dist, v in distance_crossings.items():
                     if dist <= r:
                         self.cross_model_reach[n][r].update(v)
         
@@ -84,13 +74,27 @@ class GreedySolver(BaseModel):
         
         return self
 
+    def get_from_file(self):
+        data = parse_dat_file(self.filename)
+        self.K = data["K"]
+        self.N = data["N"]
+        self.P = data["P"]
+        self.R = data["R"]
+        self.A = data["A"]
+        self.C = data["C"]
+
+        self.M = data["M"]
+
+    def compute_cost(self, camera_model: int, pattern_index: int) -> int:
+        return self.P[camera_model] + self.pattern_cost[pattern_index] * self.C[camera_model]
+
     def print_costs(self, cameras: solution_type):
         cost = 0
         try:
             _ = solver.simple_solver(solution)
             print(f"Valid solution.")
             for (k, p, c) in cameras:
-                cost += self.P[k] + len(self.pattern_indexes[p])*self.C[k] 
+                cost += self.compute_cost(k, p)
                 # print pattern
                 pattern_str = ""
                 for d in range(7):
@@ -99,7 +103,7 @@ class GreedySolver(BaseModel):
             print(f"Total cost: {cost}")
         except ValueError as e:
             for (k, p, c) in cameras:
-                cost += self.P[k] + len(self.pattern_indexes[p])*self.C[k] 
+                cost += self.compute_cost(k, p)
                 # print pattern
                 pattern_str = ""
                 for d in range(7):
@@ -155,29 +159,57 @@ class GreedySolver(BaseModel):
             if current_coverage[day] != all_crossing:
                 raise ValueError(f"Day {day+1} not fully covered")
 
-        # cost = purchase + operational, where operational is C times number of the days on
-        purchase_cost = sum(self.P[cam_model] for cam_model, _, _ in cameras)
-        operational_cost = sum(self.C[cam_model] * sum(self.pattern[day][pattern_idx] for day in range(7)) for cam_model, pattern_idx, _ in cameras)
+        cost = sum(self.compute_cost(cam_model, pattern_idx) for cam_model, pattern_idx, _ in cameras)
 
-        return purchase_cost + operational_cost
+        return cost
 
-    def greedy(self) -> solution_type:
+    def greedy(
+        self,
+        start_solution: solution_type | None = None,
+        start_coverage: list[list[int]] | None = None
+    ) -> solution_type:
+        
+        if start_solution is None:
+            solution: list[solution_type] = [
+                []
+                for _ in range(self.exponent)
+            ]
+        else:
+            solution: list[solution_type] = [
+                list(start_solution)
+                for _ in range(self.exponent)
+            ] 
+
+        if start_coverage is None:
+            coverage: list[list[list[int]]] = [
+                [[0
+                for _ in range(7)] 
+                for _ in range(self.N)] 
+                for _ in range(self.exponent)
+            ]
+        else:
+            coverage: list[list[list[int]]] = [
+                [[daily_coverage 
+                for daily_coverage in weekly_coverage] 
+                for weekly_coverage in start_coverage] 
+                for _ in range(self.exponent)
+            ]
+
+
         cost: list[int] = [0 for _ in range(self.exponent)]
-        solution: list[solution_type] = []
-        coverage: list[list[list[int]]] = []
+        total_slots_to_cover = self.N * 7
+        
 
         for exp in range(1, self.exponent + 1):
-            solution.append([])
-            coverage.append([[0 for _ in range(7)] for _ in range(self.N)])
-                
-            total_slots_to_cover = self.N * 7
-            current_covered = 0
-            used_locations: set[int] = set()
-            
+
+            current_covered = sum(coverage[exp - 1][n][d] > 0 for n in range(self.N) for d in range(7))
+            used_locations: set[int] = set([c for _, _, c in solution[exp - 1]])
+
+
             weight_list: list = []
             for n in range(self.N):
                 weight_list.append(pow(sum(self.M[n]), exp * self.exponent_multiplier))
-            
+
             while current_covered < total_slots_to_cover:
 
                 # print(self.coverage)
@@ -216,9 +248,7 @@ class GreedySolver(BaseModel):
                         # il migliore gain e quindi seleziono la migliore scelta
                         # data da cam_index, pattern_index e loc (incrocio dove si trova la camera)
                         for pattern_index in range(max_pattern_index):
-                            days_active = self.pattern_cost[pattern_index]
-
-                            move_cost = self.P[cam_index] + (days_active * self.C[cam_index])
+                            move_cost = self.compute_cost(cam_index, pattern_index)
 
                             gain = 0
 
@@ -266,7 +296,7 @@ class GreedySolver(BaseModel):
                     break
                 
             for (k, p, c) in solution[exp -1]:
-                cost[exp - 1] += self.P[k] + len(self.pattern_indexes[p])*self.C[k] 
+                cost[exp - 1] += self.compute_cost(k, p) 
             # print("cost:", exp, cost[exp - 1])
 
         min_index = cost.index(min(cost))
@@ -307,7 +337,7 @@ class GreedySolver(BaseModel):
                 for day, target, availability in zip(target_index[pattern - 14], target_patterns[pattern - 14], target_availability[pattern - 14]):
                     if all(self.coverage[covered][day] > 1 for covered in mapping): # all covered more than once
                         possible_k = [k for k in range(self.K) if self.A[k] >= availability]
-                        best_k = min(possible_k, key=lambda k: self.P[k] + self.pattern_cost[target] * self.C[k])
+                        best_k = min(possible_k, key=lambda k: self.compute_cost(k, target))
                         solution_out[i] = (best_k, target, crossing)
                         for covered in mapping: # update coverage
                             self.coverage[covered][day] -= 1
@@ -317,122 +347,7 @@ class GreedySolver(BaseModel):
         # print()
 
         return solution_out
-    
-    def greedy_from_solution(
-            self,
-            solution: solution_type,
-            coverage: list[list[int]]
-    ) -> solution_type:
-        cost: list[int] = [0 for _ in range(self.exponent)]
-        solution: list[solution_type] = [solution for _ in range(self.exponent)]
-        coverage: list[list[list[int]]] = [coverage for _ in range(self.exponent)]
-
-        total_slots_to_cover = self.N * 7
-        for exp in range(1, self.exponent + 1):
-            current_covered = sum(coverage[exp - 1][n][d] > 0 for n in range(self.N) for d in range(7))
-            used_locations: set[int] = set([c for _, _, c in solution[exp - 1]])
-            
-            weight_list: list = []
-            for n in range(self.N):
-                weight_list.append(pow(sum(self.M[n]), exp * self.exponent_multiplier))
-            
-            while current_covered < total_slots_to_cover:
-
-                # print(self.coverage)
-                # for n in range(self.N):
-                #     print(self.coverage[n])
-                # print()
-
-                current_best_ratio = float('inf')
-                best_move  = None
-
-                # loop per ogni incrocio dove voglio posizionare la mia camera
-                for loc in range(self.N):
-                    if loc in used_locations:
-                        continue
-
-                    # per ogni camera
-                    for cam_index in range(self.K):
-
-                        # l'autonomia è da 2 a 6, risolvo l'offset partendo da zero
-                        autonomy = self.A[cam_index] - 2
-                        if 0 <= autonomy < len(self.pattern_number):
-                            max_pattern_index = self.pattern_number[autonomy]
-                        else:
-                            continue
-
-                        # salvo gli incroci raggiungibili dalla videocamera con indice cam_index
-                        crossing_reachable: list = []
-                        for target in range(self.N):
-                            if (self.M[loc][target] <= self.R[cam_index]) and (self.M[loc][target] < 50):
-                                crossing_reachable.append(target)
-                                
-                        if not crossing_reachable:
-                            continue
-
-                        # verifico per pattern, durante tutta la settimana,
-                        # il migliore gain e quindi seleziono la migliore scelta
-                        # data da cam_index, pattern_index e loc (incrocio dove si trova la camera)
-                        for pattern_index in range(max_pattern_index):
-                            days_active = self.pattern_cost[pattern_index]
-
-                            move_cost = self.P[cam_index] + (days_active * self.C[cam_index])
-
-                            gain = 0
-
-                            for d in self.pattern_indexes[pattern_index]:
-                                for target in crossing_reachable:
-                                    if coverage[exp - 1][target][d] == 0:
-                                        gain += weight_list[target]
-
-                            if gain > 0:
-                                ratio = move_cost / gain
-                                # print(f"pattern {pattern_index}, ratio: {ratio} camera: {cam_index} incrocio: {loc}")
-                                # se il ratio è migliore di quello trovato precedentemente
-                                # scelgo questa combinazione di camera, pattern e incrocio
-                                if ratio < current_best_ratio:
-                                    
-                                    current_best_ratio = ratio
-                                    best_move = (cam_index, pattern_index, loc, gain)
-
-                if best_move:
-                    best_cam, best_pattern, best_loc, _ = best_move
-
-                    # aggiungo la combinazione all'insieme di soluzioni
-                    solution[exp - 1].append((best_cam, best_pattern, best_loc))
-                    used_locations.add(best_loc)
-
-                    reachable = []
-                    # aggiungo ai reachable gli incroci coperti dalla videocamera
-                    # posta all'incrocio best_loc
-                    for target in range(self.N):
-                        if (self.M[best_loc][target] <= self.R[best_cam]) and (self.M[best_loc][target] < 50): 
-                            reachable.append(target)
-
-                    for d in self.pattern_indexes[best_pattern]:
-                            # per ogni incrocio coperto (cioè presente in reachable)
-                            # se non è presente in coverage lo aggiungo e incremento di 1
-                            # il contatore dei current_covered
-                        for target in reachable:
-                            if coverage[exp - 1][target][d] == 0:
-                                current_covered += 1
-                            coverage[exp - 1][target][d] += 1
-                else:
-                    # se non sono riuscito a trovare una best move significa che
-                    # non avrò coperto alcuni incrocio in alcuni giorni della settimana
-                    print(f"Only covered {current_covered}/{total_slots_to_cover} slots.")
-                    break
-                
-            for (k, p, c) in solution[exp -1]:
-                cost[exp - 1] += self.P[k] + len(self.pattern_indexes[p])*self.C[k] 
-            # print("cost:", exp, cost[exp - 1])
-
-        min_index = cost.index(min(cost))
-        result = solution[min_index]
-        self.coverage = coverage[min_index]
-
-        return result
-
+ 
     def local_search_2(
         self, 
         solution: solution_type,
@@ -449,7 +364,7 @@ class GreedySolver(BaseModel):
             for d in self.pattern_indexes[pattern]:
                 for target in reachable:
                     benefit += 1/ pow(self.coverage[target][d], exponent)
-            cost: int = self.P[model] + len(self.pattern_indexes[pattern])*self.C[model]
+            cost: int = self.compute_cost(model, pattern)
             value: float = (benefit / cost)
             values.append(value)
             # print(f"camera: {model:2}, crossing: {crossing:2}, pattern {pattern:2}, value: {value:2.3f}, reachable: {reachable}")
@@ -467,7 +382,7 @@ class GreedySolver(BaseModel):
             # print(f"{solution[index]} removed, v: {value:2.5f}")
             solution_out.remove(solution[index])
         
-        result = self.greedy_from_solution(solution_out, self.coverage)
+        result = self.greedy(solution_out, self.coverage)
 
         return result
     
