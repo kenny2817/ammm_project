@@ -433,7 +433,12 @@ class GreedySolver(BaseModel):
 
         return result
 
-    def local_search_2(self, solution: solution_type) -> solution_type:
+    def local_search_2(
+        self, 
+        solution: solution_type,
+        exponent: int = 5,
+        remove_percent: int = 10
+    ) -> solution_type:
 
         solution_out: solution_type = solution.copy()
         values: list[float] = []
@@ -443,7 +448,7 @@ class GreedySolver(BaseModel):
             benefit: float = 0
             for d in self.pattern_indexes[pattern]:
                 for target in reachable:
-                    benefit += 1/ pow(self.coverage[target][d], 5)
+                    benefit += 1/ pow(self.coverage[target][d], exponent)
             cost: int = self.P[model] + len(self.pattern_indexes[pattern])*self.C[model]
             value: float = (benefit / cost)
             values.append(value)
@@ -452,7 +457,7 @@ class GreedySolver(BaseModel):
         sorted_values: list[tuple[int, float]] = sorted(enumerate(values), key=lambda x: x[1])
 
         # try to remove the less efficient cameras
-        for index, value in sorted_values[0:len(sorted_values)//10]: # remove 10% of cameras
+        for index, value in sorted_values[0:len(sorted_values)//(100//remove_percent)]: # remove 10% of cameras
             model, pattern, crossing = solution[index]
             reachable: list[int] = self.cross_model_reach[crossing][self.R[model]]
 
