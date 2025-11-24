@@ -3,6 +3,7 @@ from typing import DefaultDict
 from pydantic import BaseModel, Field, model_validator, computed_field # type: ignore
 from parser import parse_dat_file
 from math import pow
+import sys
 
 solution_type = list[tuple[int, int, int]]  # camera_model, pattern_index, crossing
 class GreedySolver(BaseModel):
@@ -402,8 +403,9 @@ class GreedySolver(BaseModel):
         return solution
 
 if __name__ == "__main__":
+    data = sys.argv[1]
     solver = GreedySolver(
-        filename="random_output.dat",
+        filename=str(data),
         exponent=10 # greedy weight exponent
     )
     # print(solver)
