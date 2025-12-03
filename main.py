@@ -6,6 +6,7 @@ from math import pow
 import sys
 
 solution_type = list[tuple[int, int, int]]  # camera_model, pattern_index, crossing
+
 class GreedySolver(BaseModel):
 
     filename: str
@@ -68,10 +69,6 @@ class GreedySolver(BaseModel):
                     if dist <= r:
                         self.cross_model_reach[n][r].update(v)
         
-            # print(f"Crossing {n} reachability:")
-            # for model, covered in self.cross_model_reach[n].items():
-            #     print(f"  Model with range {model} covers crossings {covered}")
-            # print()
         
         return self
 
@@ -92,7 +89,7 @@ class GreedySolver(BaseModel):
     def print_costs(self, cameras: solution_type):
         cost = 0
         try:
-            _ = solver.simple_solver(solution)
+            _ = solver.check_validity_and_cost(cameras)
             print(f"Valid solution.")
             for (k, p, c) in cameras:
                 cost += self.compute_cost(k, p)
@@ -125,7 +122,7 @@ class GreedySolver(BaseModel):
         return first + "\nM: [\n" + last + "\n]"
 
     # A list of tuple[camera_model, pattern_index, crossing]
-    def simple_solver(self, cameras: solution_type) -> int:
+    def check_validity_and_cost(self, cameras: solution_type) -> int:
         covered_crossings: set = set()
 
         # at most one camera can be placed at a given crossing
@@ -392,12 +389,12 @@ class GreedySolver(BaseModel):
         solution: solution_type,
         search_strategy: callable
     ) -> solution_type:
-        cost_0: int = solver.simple_solver(solution)
+        cost_0: int = solver.check_validity_and_cost(solution)
         cost_1: int = cost_0 -1
         while (cost_0 > cost_1):
             cost_0 = cost_1
             solution = search_strategy(solution)
-            cost_1 = solver.simple_solver(solution)
+            cost_1 = solver.check_validity_and_cost(solution)
             print(f"cost: {cost_0:5} > {cost_1:5} | % {(cost_0 - cost_1)/cost_0 * 100:2.2f}%")
 
         return solution
@@ -410,13 +407,13 @@ if __name__ == "__main__":
     )
     # print(solver)
     solution = solver.greedy()
-    cost_0: int = solver.simple_solver(solution)
+    cost_0: int = solver.check_validity_and_cost(solution)
     print(f"cost: {cost_0:5}")
     solution = solver.local_search_1(solution)
-    cost_1: int = solver.simple_solver(solution)
+    cost_1: int = solver.check_validity_and_cost(solution)
     print(f"cost: {cost_0:5} > {cost_1:5} | % {(cost_0 - cost_1)/cost_0 * 100:2.2f}%")
     solution = solver.local_search_0(solution, solver.local_search_2)
-    cost_1: int = solver.simple_solver(solution)
+    cost_1: int = solver.check_validity_and_cost(solution)
     print(" FINAL RESULT ")
     print(f"cost: {cost_0:5} > {cost_1:5} | % {(cost_0 - cost_1)/cost_0 * 100:2.2f}%")
     solver.print_costs(solution)
