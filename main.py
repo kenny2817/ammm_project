@@ -52,9 +52,9 @@ class GreedySolver(BaseModel):
             for p in range(num_patterns)
         ]
 
-        self.pattern_cost: list = [len(self.pattern_indexes[p]) for p in range(num_patterns)]
+        self.pattern_cost = [len(self.pattern_indexes[p]) for p in range(num_patterns)]
 
-        self.cross_model_reach: list[dict[int, set[int]]] = [defaultdict(set) for _ in range(self.N)] # crossing - model = set(reachable crossings) 
+        self.cross_model_reach = [defaultdict(set) for _ in range(self.N)] # crossing - model = set(reachable crossings) 
         for n in range(self.N):
             distance_crossings: dict[int, list[int]] = defaultdict(list) # distance - list(crossings)
             for m in range(self.N):
@@ -298,7 +298,7 @@ class GreedySolver(BaseModel):
                 
             for (k, p, c) in solution[exp -1]:
                 cost[exp - 1] += self.compute_cost(k, p) 
-            # print("cost:", exp, cost[exp - 1])
+            print("cost:", exp, cost[exp - 1])
 
         min_index = cost.index(min(cost))
         result = solution[min_index]
@@ -380,7 +380,7 @@ class GreedySolver(BaseModel):
             for d in self.pattern_indexes[pattern]:
                 for target in reachable:
                     self.coverage[target][d] -= 1
-            # print(f"{solution[index]} removed, v: {value:2.5f}")
+            print(f"{solution[index]} removed, v: {value:2.5f}")
             solution_out.remove(solution[index])
         
         result = self.greedy(solution_out, self.coverage)
