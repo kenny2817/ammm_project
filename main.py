@@ -643,7 +643,7 @@ if __name__ == "__main__":
     # cost_1: int = solver.check_validity_and_cost(solution)
     # print(f"cost: {cost_0:5} > {cost_1:5} | % {(cost_0 - cost_1)/cost_0 * 100:2.2f}%")
     # solution = solver.local_search_0(solution, solver.local_search_2)
-    # cost_1: int = solver.check_validity_and_cost(solution)
+    # ˀcost_1: int = solver.check_validity_and_cost(solution)
     print("---- GRASP exec ----")
     grasp_sol = solver.run_grasp(max_iterations=50, alpha=0.1)
     cost_2: int = solver.check_validity_and_cost(grasp_sol)
