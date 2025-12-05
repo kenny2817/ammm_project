@@ -1,7 +1,8 @@
 
-//execute {
-//    cplex.threads = 1;
-//}
+execute {
+    // cplex.threads = 1;
+    cplex.Tilim = 30
+}
 
 // Parameters =====================================================================================
 int K             = ...;

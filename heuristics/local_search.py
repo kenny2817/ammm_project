@@ -87,9 +87,9 @@ class LocalSearch:
         options: dict[tuple[int, int, int, int], int] = {}
 
         for i, day, target, availability in removable_pattern:
-            possible_k = [k for k in range(self.K) if self.A[k] >= availability]
+            possible_k = [k for k in range(self.K) if self.A[k] >= availability and self.R[k] >= self.R[solution[i][0]]]
             best_k = min(possible_k, key=lambda k: self.compute_cost(k, target))
-            options[(i, best_k, target, 1)] = self.compute_cost(solution_out[i][0], solution_out[i][1]) - self.compute_cost(best_k, target)
+            options[(i, best_k, target, 0)] = self.compute_cost(solution_out[i][0], solution_out[i][1]) - self.compute_cost(best_k, target)
         
         for i, r in removable_range.items():
             possible_k = [k for k in range(self.K) if self.R[k] >= r]
@@ -130,12 +130,19 @@ class LocalSearch:
         solution: solution_type,
         search_strategy: callable
     ) -> solution_type:
-        cost_0: int = solver.check_validity_and_cost(solution)
-        cost_1: int = cost_0 -1
+                
+        cost_0: int = 1
+        cost_1: int = 0
+        safe_sol : solution_type
+        
         while (cost_0 > cost_1):
-            cost_0 = cost_1
+            safe_sol = solution
+            cost_0 = self.check_validity_and_cost(solution)
             solution = search_strategy(solution)
-            cost_1 = solver.check_validity_and_cost(solution)
-            print(f"cost: {cost_0:5} > {cost_1:5} | % {(cost_0 - cost_1)/cost_0 * 100:2.2f}%")
+            try:
+                cost_1 = self.check_validity_and_cost(solution)
+                print(f"cost: {cost_0:5} > {cost_1:5} | % {(cost_0 - cost_1)/cost_0 * 100:2.2f}%")
+            except:
+                break
 
-        return solution
+        return safe_sol
