@@ -25,7 +25,7 @@ def parse_dat_file(filename: str) -> dict:
 
     # Regex breakdown:
     # (\w+)               - Capture group 1: The key (e.g., "M")
-    # \s*=\s* - Equals sign, surrounded by optional whitespace
+    # \s*=\s*             - Equals sign, surrounded by optional whitespace
     # \[\n                - A literal bracket followed by a newline (start of matrix block)
     # (.*?)               - Capture group 2: The matrix content (non-greedy)
     # \n\];               - A newline, a closing bracket, and a semicolon (end of matrix block)
