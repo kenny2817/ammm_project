@@ -34,12 +34,37 @@ class GreedySolver(BaseModel):
         [0,0,0,0,0,1,1, 0,1,1,0,0,1,1, 0,0,0,0,1,1,1, 0,1,1,1,0,1,1, 0,0,1,1,1,1,1, 0,1,1,1,1,1,1, 0,1,1,1,1,1,1]   # Day 7
     ]
 
+    target_index: list[list[int]] = [
+        [0,2],[1,3],[2,4],[3,5],[4,6],[5,0],[6,1],
+        [3,5],[4,6],[5,0],[6,1],[0,2],[1,3],[2,4],
+        [0,3],[1,4],[2,5],[3,6],[4,0],[5,1],[6,2],
+        [0,2,4],[1,3,5],[2,4,6],[3,5,0],[4,6,1],[5,0,2],[6,1,3],
+        [0,2,3,5],[1,3,4,6],[2,4,5,0],[3,5,6,1],[4,6,0,2],[5,0,1,3],[6,1,2,4]
+    ] # indexes of days for each pattern > 13 that can be removed to reduce cost
+    target_patterns: list[list[int]] = [
+        [1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[0,6],
+        [7,10],[8,11],[9,12],[10,13],[11,7],[12,8],[13,9],
+        [15,14],[16,15],[17,16],[18,17],[19,18],[20,19],[21,20],
+        [29,10,28],[30,11,29],[31,12,30],[32,13,31],[33,7,32],[34,8,33],[35,9,34],
+        [36,28,32,35],[37,29,33,36],[38,30,34,37],[39,31,28,38],[40,32,29,39],[41,33,30,40],[42,34,31,41]
+    ] # target patterns to switch to for each pattern > 13 after removing days
+    target_availability: list[list[int]] = [
+        [2,2],[2,2],[2,2],[2,2],[2,2],[2,2],[2,2],
+        [2,2],[2,2],[2,2],[2,2],[2,2],[2,2],[2,2],
+        [3,3],[3,3],[3,3],[3,3],[3,3],[3,3],[3,3],
+        [4,2,4],[4,2,4],[4,2,4],[4,2,4],[4,2,4],[4,2,4],[4,2,4],
+        [5,3,3,5],[5,3,3,5],[5,3,3,5],[5,3,3,5],[5,3,3,5],[5,3,3,5],[5,3,3,5]
+    ] # target min availability for each pattern > 13 after removing days
+
+
     pattern_indexes: list[list[int]] = Field(default_factory=list)
     pattern_cost: list[int] = Field(default_factory=list)
     pattern_number: list = [14, 28, 35, 42, 49]
 
     coverage: list[list[int]] = Field(default_factory=list)
     cross_model_reach: list[DefaultDict[int, set[int]]] = Field(default_factory=list)
+    cross_reach_exclusive: list[DefaultDict[int, set[int]]] = Field(default_factory=list)
+    ranges : list[int] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def deserializer(self) -> "GreedySolver":
@@ -56,7 +81,10 @@ class GreedySolver(BaseModel):
 
         self.pattern_cost = [len(self.pattern_indexes[p]) for p in range(num_patterns)]
 
-        self.cross_model_reach = [defaultdict(set) for _ in range(self.N)] # crossing - model = set(reachable crossings) 
+        self.cross_model_reach: list[dict[int, set[int]]] = [defaultdict(set) for _ in range(self.N)] # crossing - model = set(reachable crossings) 
+        self.cross_reach_exclusive = [defaultdict(set) for _ in range(self.N)]
+
+        self.ranges: list[int] = sorted(set(self.R))
         for n in range(self.N):
             distance_crossings: dict[int, list[int]] = defaultdict(list) # distance - list(crossings)
             for m in range(self.N):
@@ -64,13 +92,21 @@ class GreedySolver(BaseModel):
             # distance_crossings.pop(0, None)
             distance_crossings.pop(50, None)
             
-            for k in range(self.K):
-                r = self.R[k]
+            seen_crossings: set[int] = set()
+            for r in self.ranges:
                 for dist, v in distance_crossings.items():
                     if dist <= r:
                         self.cross_model_reach[n][r].update(v)
-        
-        
+
+                current_reach = self.cross_model_reach[n][r]                
+                self.cross_reach_exclusive[n][r] = current_reach - seen_crossings                
+                seen_crossings.update(current_reach)
+                    
+            # print(f"Crossing {n} reachability:")
+            # for model, covered in self.cross_model_reach[n].items():
+            #     print(f"  Model with range {model} covers crossings {covered}")
+            # print()
+
         return self
 
     def get_from_file(self):
@@ -303,46 +339,23 @@ class GreedySolver(BaseModel):
 
         return result
 
-    def local_search_1(self, solution: solution_type) -> solution_type:
-        
-        target_index: list[list[int]] = [
-            [0,2],[1,3],[2,4],[3,5],[4,6],[5,0],[6,1],
-            [3,5],[4,6],[5,0],[6,1],[0,2],[1,3],[2,4],
-            [0,3],[1,4],[2,5],[3,6],[4,0],[5,1],[6,2],
-            [0,2,4],[1,3,5],[2,4,6],[3,5,0],[4,6,1],[5,0,2],[6,1,3],
-            [0,2,3,5],[1,3,4,6],[2,4,5,0],[3,5,6,1],[4,6,0,2],[5,0,1,3],[6,1,2,4]
-        ] # indexes of days for each pattern > 13 that can be removed to reduce cost
-        target_patterns: list[list[int]] = [
-            [1,0],[2,1],[3,2],[4,3],[5,4],[6,5],[0,6],
-            [7,10],[8,11],[9,12],[10,13],[11,7],[12,8],[13,9],
-            [15,14],[16,15],[17,16],[18,17],[19,18],[20,19],[21,20],
-            [29,10,28],[30,11,29],[31,12,30],[32,13,31],[33,7,32],[34,8,33],[35,9,34],
-            [36,28,32,35],[37,29,33,36],[38,30,34,37],[39,31,28,38],[40,32,29,39],[41,33,30,40],[42,34,31,41]
-        ] # target patterns to switch to for each pattern > 13 after removing days
-        target_availability: list[list[int]] = [
-            [2,2],[2,2],[2,2],[2,2],[2,2],[2,2],[2,2],
-            [2,2],[2,2],[2,2],[2,2],[2,2],[2,2],[2,2],
-            [3,3],[3,3],[3,3],[3,3],[3,3],[3,3],[3,3],
-            [4,2,4],[4,2,4],[4,2,4],[4,2,4],[4,2,4],[4,2,4],[4,2,4],
-            [5,3,3,5],[5,3,3,5],[5,3,3,5],[5,3,3,5],[5,3,3,5],[5,3,3,5],[5,3,3,5]
-        ] # target min availability for each pattern > 13 after removing days
+    def local_search_1(
+            self, 
+            solution: solution_type
+        ) -> solution_type:
 
         solution_out: solution_type = solution.copy()
         # try to reduce patterns length
         for i, (model, pattern, crossing) in enumerate(solution_out):
             if pattern > 13: # only patterns with active time > 2
                 mapping = self.cross_model_reach[crossing][self.R[model]]
-                for day, target, availability in zip(target_index[pattern - 14], target_patterns[pattern - 14], target_availability[pattern - 14]):
+                for day, target, availability in zip(self.target_index[pattern - 14], self.target_patterns[pattern - 14], self.target_availability[pattern - 14]):
                     if all(self.coverage[covered][day] > 1 for covered in mapping): # all covered more than once
                         possible_k = [k for k in range(self.K) if self.A[k] >= availability]
                         best_k = min(possible_k, key=lambda k: self.compute_cost(k, target))
                         solution_out[i] = (best_k, target, crossing)
                         for covered in mapping: # update coverage
                             self.coverage[covered][day] -= 1
-
-        # for n in range(self.N):
-        #     print(self.coverage[n])
-        # print()
 
         return solution_out
  
@@ -384,6 +397,74 @@ class GreedySolver(BaseModel):
 
         return result
     
+    def local_search_3(
+        self, 
+        solution: solution_type
+    ) -> solution_type:
+
+        solution_out: solution_type = solution.copy()
+
+        removable_pattern: list[tuple[int, int, int, int]] = []
+        removable_range: dict[int, int] = {}
+        for i, (model, pattern, crossing) in enumerate(solution_out):
+            if pattern > 13: # only patterns with active time > 2
+                mapping = self.cross_model_reach[crossing][self.R[model]]
+                for day, target, availability in zip(self.target_index[pattern - 14], self.target_patterns[pattern - 14], self.target_availability[pattern - 14]):
+                    if all(self.coverage[covered][day] > 1 for covered in mapping): # all covered more than once
+                        removable_pattern.append((i, day, target, availability))
+
+            for r in reversed(self.ranges[0 : self.ranges.index(self.R[model])+1]):
+                if all(self.coverage[covered][day] > 1 
+                       for covered in self.cross_reach_exclusive[crossing][r] 
+                       for day in self.pattern_indexes[pattern]):
+                    # print(crossing, r, "l", *self.cross_reach_exclusive[crossing][r])
+                    removable_range[i] = r
+                else:
+                    break
+
+        # find the best option
+        options: dict[tuple[int, int, int, int], int] = {}
+
+        for i, day, target, availability in removable_pattern:
+            possible_k = [k for k in range(self.K) if self.A[k] >= availability]
+            best_k = min(possible_k, key=lambda k: self.compute_cost(k, target))
+            options[(i, best_k, target, 1)] = self.compute_cost(solution_out[i][0], solution_out[i][1]) - self.compute_cost(best_k, target)
+        
+        for i, r in removable_range.items():
+            possible_k = [k for k in range(self.K) if self.R[k] >= r]
+            best_k = min(possible_k, key=lambda k: self.compute_cost(k, solution_out[i][1]))
+            options[(i, best_k, solution_out[i][1], 1)] = self.compute_cost(solution_out[i][0], solution_out[i][1]) - self.compute_cost(best_k, solution_out[i][1])
+
+        if options:
+            target_for_removal = max(options.items(), key=lambda o : o[1])[0]
+            # print(target_for_removal)
+            target = solution_out[target_for_removal[0]]
+            # print(self.cross_model_reach[target[2]][self.R[target[0]]])
+            for covered in self.cross_model_reach[target[2]][self.R[target[0]]]: # update coverage
+                for day in self.pattern_indexes[target[1]]:
+                    self.coverage[covered][day] -= 1
+
+            # for n in range(self.N):
+            #     print(self.coverage[n])
+            # print(1)
+            # print(solution_out)
+
+            solution_out[target_for_removal[0]] = (target_for_removal[1], target_for_removal[2], target[2])
+            # print(solution_out)
+
+            target = solution_out[target_for_removal[0]]
+            # print(self.cross_model_reach[target[2]][self.R[target[0]]])
+            for covered in self.cross_model_reach[target[2]][self.R[target[0]]]: # update coverage
+                for day in self.pattern_indexes[target[1]]:
+                    self.coverage[covered][day] += 1
+            
+            # for n in range(self.N):
+            #     print(self.coverage[n])
+            # print(2)
+
+        return solution_out
+
+
     def local_search_0(
         self, 
         solution: solution_type,
@@ -553,15 +634,16 @@ if __name__ == "__main__":
         exponent=10 # greedy weight exponent
     )
     # print(solver)
-   # print("---- Standard Greedy exec ----")
-   # solution = solver.greedy()
-   # cost_0: int = solver.check_validity_and_cost(solution)
-   # print(f"cost: {cost_0:5}")
-#    solution = solver.local_search_1(solution)
-#    cost_1: int = solver.check_validity_and_cost(solution)
-#    print(f"cost: {cost_0:5} > {cost_1:5} | % {(cost_0 - cost_1)/cost_0 * 100:2.2f}%")
-#    solution = solver.local_search_0(solution, solver.local_search_2)
-#    cost_1: int = solver.check_validity_and_cost(solution)
+    # print("---- Standard Greedy exec ----")
+    # solution = solver.greedy()
+    # cost_0: int = solver.check_validity_and_cost(solution)
+    # print(f"cost: {cost_0:5}")
+    # solver.print_costs(solution)
+    # solution = solver.local_search_0(solution, solver.local_search_3)
+    # cost_1: int = solver.check_validity_and_cost(solution)
+    # print(f"cost: {cost_0:5} > {cost_1:5} | % {(cost_0 - cost_1)/cost_0 * 100:2.2f}%")
+    # solution = solver.local_search_0(solution, solver.local_search_2)
+    # cost_1: int = solver.check_validity_and_cost(solution)
     print("---- GRASP exec ----")
     grasp_sol = solver.run_grasp(max_iterations=50, alpha=0.1)
     cost_2: int = solver.check_validity_and_cost(grasp_sol)
