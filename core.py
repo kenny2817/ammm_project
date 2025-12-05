@@ -9,7 +9,7 @@ class SolverBase(BaseModel):
 
     filename: str
     exponent: int
-    exponent_multiplier: int = 2
+    exponent_multiplier: int = 1
 
     K: int = 0
     N: int = 0

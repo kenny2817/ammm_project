@@ -146,102 +146,120 @@ class GreedyGrasp:
         alpha = 0: Pure Greedy (always pick best)
         alpha = 1: Pure Random (pick any valid move)
         """
-        solution: solution_type = []
         
-        # Reset coverage for this construction
-        current_coverage = [[0 for _ in range(7)] for _ in range(self.N)]
-        current_covered_count = 0
-        total_slots_to_cover = self.N * 7
-        
-        used_locations: set[int] = set()
-        effective_exponent = self.exponent * self.exponent_multiplier
+        solutions_list: list = []
 
-        # We calculate the weight list by elevating the sum of all crossings reachability for each crossing
-        # by self.exponent times a user defined multiplier. In this way if from a crossing other crossings 
-        # require an higher reachability, the cross will have an higher weight
-        weight_list: list = []
-        for n in range(self.N):
-            weight_list.append(pow(sum(self.M[n]), effective_exponent))
-
-        # we continue to perform the algorithm until each slot is covered
-        while current_covered_count < total_slots_to_cover:
-            candidates = [] # List of tuples: (ratio, move)
+        for exp in range(1, self.exponent + 1):
+            solution: solution_type = []
             
-            # 1. Identify all valid candidate moves
-            for loc in range(self.N):
-                if loc in used_locations:
-                    continue
+            # Reset coverage for this construction
+            current_coverage = [[0 for _ in range(7)] for _ in range(self.N)]
+            current_covered_count = 0
+            total_slots_to_cover = self.N * 7
+            
+            used_locations: set[int] = set()
+            effective_exponent = self.exponent * self.exponent_multiplier
+            
+            # We calculate the weight list by elevating the sum of all crossings reachability for each crossing
+            # by self.exponent times a user defined multiplier. In this way if from a crossing other crossings 
+            # require an higher reachability, the cross will have an higher weight
+            weight_list: list = []
+            for n in range(self.N):
+                weight_list.append(pow(sum(self.M[n]), effective_exponent))
 
-                for cam_index in range(self.K):
-                    # Check autonomy validity
-                    autonomy = self.A[cam_index] - 2
-                    if not (0 <= autonomy < len(self.pattern_number)):
-                        continue
-                    
-                    # We can select for this camera up to max_pattern_index different patterns
-                    max_pattern_index = self.pattern_number[autonomy]
-                    
-                    # Find reachable crossings: the camera range must be higher or equal than the crossing
-                    # reachability, and the crossing we're looking must have a reachability < 50
-                    crossing_reachable: list = []
-                    for target in range(self.N):
-                        if (self.M[loc][target] <= self.R[cam_index]) and (self.M[loc][target] < 50):
-                            crossing_reachable.append(target)
-                    
-                    if not crossing_reachable:
+            # we continue to perform the algorithm until each slot is covered
+            while current_covered_count < total_slots_to_cover:
+                candidates = [] # List of tuples: (ratio, move)
+                
+                # Identify all valid candidate moves
+                for loc in range(self.N):
+                    if loc in used_locations:
                         continue
 
-                    # Evaluate patterns
-                    for pattern_index in range(max_pattern_index):
-                        # move_cost = self.compute_cost(cam_index, pattern_index)
-                        gain = 0
+                    for cam_index in range(self.K):
+                        # Check autonomy validity
+                        autonomy = self.A[cam_index] - 2
+                        if not (0 <= autonomy < len(self.pattern_number)):
+                            continue
                         
-                        # Calculate gain based on uncovered slots
-                        for d in self.pattern_indexes[pattern_index]:
-                            for target in crossing_reachable:
-                                if current_coverage[target][d] == 0:
-                                    gain += weight_list[target] 
+                        # We can select for this camera up to max_pattern_index different patterns
+                        max_pattern_index = self.pattern_number[autonomy]
+                        
+                        # Find reachable crossings: the camera range must be higher or equal than the crossing
+                        # reachability, and the crossing we're looking must have a reachability < 50
+                        crossing_reachable: list = []
+                        for target in range(self.N):
+                            if (self.M[loc][target] <= self.R[cam_index]) and (self.M[loc][target] < 50):
+                                crossing_reachable.append(target)
+                        
+                        if not crossing_reachable:
+                            continue
 
-                        if gain > 0:
-                            move_cost = self.compute_cost(cam_index, pattern_index)
-                            ratio = move_cost / gain
-                            move = (cam_index, pattern_index, loc)
-                            candidates.append((ratio, move))
+                        # Evaluate patterns
+                        for pattern_index in range(max_pattern_index):
+                            # move_cost = self.compute_cost(cam_index, pattern_index)
+                            gain = 0
+                            
+                            # Calculate gain based on uncovered slots
+                            for d in self.pattern_indexes[pattern_index]:
+                                for target in crossing_reachable:
+                                    if current_coverage[target][d] == 0:
+                                        gain += weight_list[target] 
 
-            if not candidates:
-                # Should not happen if a feasible solution exists
-                return None
+                            if gain > 0:
+                                move_cost = self.compute_cost(cam_index, pattern_index)
+                                ratio = move_cost / gain
+                                move = (cam_index, pattern_index, loc)
+                                candidates.append((ratio, move))
 
-            # 2. Build Restricted Candidate List (RCL)
-            # We want to MINIMIZE ratio (Cost / Gain)
-            candidates.sort(key=lambda x: x[0]) 
+                if not candidates:
+                    # Should not happen if a feasible solution exists
+                    return None
+
+                # Build RCL
+                # We want to minimize ratio (Cost / Gain)
+                candidates.sort(key=lambda x: x[0]) 
+                
+                min_ratio = candidates[0][0]
+                
+                # Threshold: moves with ratio <= min + alpha * (range)
+                threshold = min_ratio * (1 + alpha)
+                rcl = [move for ratio, move in candidates if ratio <= threshold]
+
+                # Pick random move from RCL
+                best_cam, best_pattern, best_loc = random.choice(rcl)
+                
+                # Update state
+                solution.append((best_cam, best_pattern, best_loc))
+                used_locations.add(best_loc)
+                
+                reachable = []
+
+                # Control if crossing (target) is reachable by best_cam (M < Range_camera and M < 50)
+                for target in range(self.N):
+                    if (self.M[best_loc][target] <= self.R[best_cam]) and (self.M[best_loc][target] < 50): 
+                        reachable.append(target)
+
+                # mark crossing covered in current_covered count and increment current_coverage
+                for d in self.pattern_indexes[best_pattern]:
+                    for target in reachable:
+                        if current_coverage[target][d] == 0:
+                            current_covered_count += 1
+                        current_coverage[target][d] += 1
+
+            cost = self.check_validity_and_cost(solution)
+            solutions_list.append((cost, solution, current_coverage))
+
+        solutions_list.sort(key=lambda x: x[0])
+        min_ratio = solutions_list[0][0]
+
+        threshold = min_ratio * (1 + alpha)
+        rcl = [(solution, current_coverage) for cost, solution, current_coverage in solutions_list if cost <= threshold]
+
+        solution, coverage = random.choice(rcl)
             
-            min_ratio = candidates[0][0]
-            
-            # Threshold: moves with ratio <= min + alpha * (range)
-            threshold = min_ratio * (1 + alpha)
-            rcl = [move for ratio, move in candidates if ratio <= threshold]
-
-            # 3. Pick random move from RCL
-            best_cam, best_pattern, best_loc = random.choice(rcl)
-            
-            # 4. Update state
-            solution.append((best_cam, best_pattern, best_loc))
-            used_locations.add(best_loc)
-            
-            reachable = []
-            for target in range(self.N):
-                if (self.M[best_loc][target] <= self.R[best_cam]) and (self.M[best_loc][target] < 50): 
-                    reachable.append(target)
-
-            for d in self.pattern_indexes[best_pattern]:
-                for target in reachable:
-                    if current_coverage[target][d] == 0:
-                        current_covered_count += 1
-                    current_coverage[target][d] += 1
-        
         # Save the coverage state for the Local Search to use
-        self.coverage = current_coverage 
+        self.coverage = coverage 
         return solution
 
     def run_grasp(self, max_iterations: int = 50, alpha: float = 0.2) -> solution_type:
@@ -263,6 +281,8 @@ class GreedyGrasp:
 
             if candidate_sol is None:
                 continue
+
+
 
             try:
                 # Check feasibility immediately

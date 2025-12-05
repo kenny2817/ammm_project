@@ -35,7 +35,7 @@ class LocalSearch:
             benefit: float = 0
             for d in self.pattern_indexes[pattern]:
                 for target in reachable:
-                    benefit += 1/ pow(self.coverage[target][d], exponent)
+                    benefit += 1/ pow(self.coverage[target][d], self.exponent)
             cost: int = self.compute_cost(model, pattern)
             value: float = (benefit / cost)
             values.append(value)
@@ -51,7 +51,7 @@ class LocalSearch:
             for d in self.pattern_indexes[pattern]:
                 for target in reachable:
                     self.coverage[target][d] -= 1
-            print(f"{solution[index]} removed, v: {value:2.5f}")
+            # print(f"{solution[index]} removed, v: {value:2.5f}")
             solution_out.remove(solution[index])
         
         result = self.greedy(solution_out, self.coverage)
@@ -130,12 +130,12 @@ class LocalSearch:
         solution: solution_type,
         search_strategy: callable
     ) -> solution_type:
-        cost_0: int = solver.check_validity_and_cost(solution)
+        cost_0: int = self.check_validity_and_cost(solution)
         cost_1: int = cost_0 -1
         while (cost_0 > cost_1):
             cost_0 = cost_1
             solution = search_strategy(solution)
-            cost_1 = solver.check_validity_and_cost(solution)
+            cost_1 = self.check_validity_and_cost(solution)
             print(f"cost: {cost_0:5} > {cost_1:5} | % {(cost_0 - cost_1)/cost_0 * 100:2.2f}%")
 
         return solution
