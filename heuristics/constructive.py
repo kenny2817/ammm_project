@@ -207,8 +207,6 @@ class GreedyGrasp:
                             ratio = move_cost / gain
                             move = (cam_index, pattern_index, loc)
                             candidates.append((ratio, move))
-                        else:
-                            print(f"gain {gain}")
 
             if not candidates:
                 # Should not happen if a feasible solution exists
@@ -223,8 +221,7 @@ class GreedyGrasp:
             # Threshold: moves with ratio <= min + alpha * (range)
             threshold = min_ratio * (1 + alpha)
             rcl = [move for ratio, move in candidates if ratio <= threshold]
-            print(f"rcl: {rcl}")
-            
+
             # 3. Pick random move from RCL
             best_cam, best_pattern, best_loc = random.choice(rcl)
             

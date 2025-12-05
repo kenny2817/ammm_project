@@ -9,7 +9,7 @@ class LocalSearch:
         for i, (model, pattern, crossing) in enumerate(solution_out):
             if pattern > 13: # only patterns with active time > 2
                 mapping = self.cross_model_reach[crossing][self.R[model]]
-                for day, target, availability in zip(target_index[pattern - 14], target_patterns[pattern - 14], target_availability[pattern - 14]):
+                for day, target, availability in zip(LS_TARGET_INDEX[pattern - 14], LS_TARGET_PATTERNS[pattern - 14], LS_TARGET_AVAILABILITY[pattern - 14]):
                     if all(self.coverage[covered][day] > 1 for covered in mapping): # all covered more than once
                         possible_k = [k for k in range(self.K) if self.A[k] >= availability]
                         best_k = min(possible_k, key=lambda k: self.compute_cost(k, target))
@@ -17,9 +17,6 @@ class LocalSearch:
                         for covered in mapping: # update coverage
                             self.coverage[covered][day] -= 1
 
-        # for n in range(self.N):
-        #     print(self.coverage[n])
-        # print()
 
         return solution_out
  
@@ -60,6 +57,73 @@ class LocalSearch:
         result = self.greedy(solution_out, self.coverage)
 
         return result
+
+    def local_search_3(
+        self, 
+        solution: solution_type
+    ) -> solution_type:
+
+        solution_out: solution_type = solution.copy()
+
+        removable_pattern: list[tuple[int, int, int, int]] = []
+        removable_range: dict[int, int] = {}
+        for i, (model, pattern, crossing) in enumerate(solution_out):
+            if pattern > 13: # only patterns with active time > 2
+                mapping = self.cross_model_reach[crossing][self.R[model]]
+                for day, target, availability in zip(LS_TARGET_INDEX[pattern - 14], LS_TARGET_PATTERNS[pattern - 14], LS_TARGET_AVAILABILITY[pattern - 14]):
+                    if all(self.coverage[covered][day] > 1 for covered in mapping): # all covered more than once
+                        removable_pattern.append((i, day, target, availability))
+
+            for r in reversed(self.ranges[0 : self.ranges.index(self.R[model])+1]):
+                if all(self.coverage[covered][day] > 1 
+                       for covered in self.cross_reach_exclusive[crossing][r] 
+                       for day in self.pattern_indexes[pattern]):
+                    # print(crossing, r, "l", *self.cross_reach_exclusive[crossing][r])
+                    removable_range[i] = r
+                else:
+                    break
+
+        # find the best option
+        options: dict[tuple[int, int, int, int], int] = {}
+
+        for i, day, target, availability in removable_pattern:
+            possible_k = [k for k in range(self.K) if self.A[k] >= availability]
+            best_k = min(possible_k, key=lambda k: self.compute_cost(k, target))
+            options[(i, best_k, target, 1)] = self.compute_cost(solution_out[i][0], solution_out[i][1]) - self.compute_cost(best_k, target)
+        
+        for i, r in removable_range.items():
+            possible_k = [k for k in range(self.K) if self.R[k] >= r]
+            best_k = min(possible_k, key=lambda k: self.compute_cost(k, solution_out[i][1]))
+            options[(i, best_k, solution_out[i][1], 1)] = self.compute_cost(solution_out[i][0], solution_out[i][1]) - self.compute_cost(best_k, solution_out[i][1])
+
+        if options:
+            target_for_removal = max(options.items(), key=lambda o : o[1])[0]
+            # print(target_for_removal)
+            target = solution_out[target_for_removal[0]]
+            # print(self.cross_model_reach[target[2]][self.R[target[0]]])
+            for covered in self.cross_model_reach[target[2]][self.R[target[0]]]: # update coverage
+                for day in self.pattern_indexes[target[1]]:
+                    self.coverage[covered][day] -= 1
+
+            # for n in range(self.N):
+            #     print(self.coverage[n])
+            # print(1)
+            # print(solution_out)
+
+            solution_out[target_for_removal[0]] = (target_for_removal[1], target_for_removal[2], target[2])
+            # print(solution_out)
+
+            target = solution_out[target_for_removal[0]]
+            # print(self.cross_model_reach[target[2]][self.R[target[0]]])
+            for covered in self.cross_model_reach[target[2]][self.R[target[0]]]: # update coverage
+                for day in self.pattern_indexes[target[1]]:
+                    self.coverage[covered][day] += 1
+            
+            # for n in range(self.N):
+            #     print(self.coverage[n])
+            # print(2)
+
+        return solution_out
     
     def local_search_0(
         self, 

@@ -25,6 +25,8 @@ class SolverBase(BaseModel):
     pattern_cost: list[int] = Field(default_factory=list)
     coverage: list[list[int]] = Field(default_factory=list)
     cross_model_reach: list[DefaultDict[int, set[int]]] = Field(default_factory=list)
+    cross_reach_exclusive: list[DefaultDict[int, set[int]]] = Field(default_factory=list)
+    ranges : list[int] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def deserializer(self) -> "SolverBase":
@@ -42,6 +44,9 @@ class SolverBase(BaseModel):
         self.pattern_cost = [len(self.pattern_indexes[p]) for p in range(num_patterns)]
 
         self.cross_model_reach = [defaultdict(set) for _ in range(self.N)] # crossing - model = set(reachable crossings) 
+        self.cross_reach_exclusive = [defaultdict(set) for _ in range(self.N)]
+
+        self.ranges: list[int] = sorted(set(self.R))
         for n in range(self.N):
             distance_crossings: dict[int, list[int]] = defaultdict(list) # distance - list(crossings)
             for m in range(self.N):
@@ -49,12 +54,20 @@ class SolverBase(BaseModel):
             # distance_crossings.pop(0, None)
             distance_crossings.pop(50, None)
             
-            for k in range(self.K):
-                r = self.R[k]
+            seen_crossings: set[int] = set()
+            for r in self.ranges:
                 for dist, v in distance_crossings.items():
                     if dist <= r:
                         self.cross_model_reach[n][r].update(v)
         
+                current_reach = self.cross_model_reach[n][r]                
+                self.cross_reach_exclusive[n][r] = current_reach - seen_crossings                
+                seen_crossings.update(current_reach)
+                    
+            # print(f"Crossing {n} reachability:")
+            # for model, covered in self.cross_model_reach[n].items():
+            #     print(f"  Model with range {model} covers crossings {covered}")
+            # print()
         
         return self
 
