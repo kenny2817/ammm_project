@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field, model_validator, computed_field # type: i
 from parser import parse_dat_file
 from math import pow
 import sys
+import random
 
 solution_type = list[tuple[int, int, int]]  # camera_model, pattern_index, crossing
 
@@ -32,11 +33,11 @@ class GreedySolver(BaseModel):
         [0,0,0,0,1,1,0, 1,1,0,0,1,1,0, 0,0,0,1,1,1,0, 1,1,1,0,1,1,0, 0,1,1,1,1,1,0, 1,1,1,1,1,1,0, 1,1,1,1,1,1,0],  # Day 6
         [0,0,0,0,0,1,1, 0,1,1,0,0,1,1, 0,0,0,0,1,1,1, 0,1,1,1,0,1,1, 0,0,1,1,1,1,1, 0,1,1,1,1,1,1, 0,1,1,1,1,1,1]   # Day 7
     ]
+
     pattern_indexes: list[list[int]] = Field(default_factory=list)
-
     pattern_cost: list[int] = Field(default_factory=list)
-
     pattern_number: list = [14, 28, 35, 42, 49]
+
     coverage: list[list[int]] = Field(default_factory=list)
     cross_model_reach: list[DefaultDict[int, set[int]]] = Field(default_factory=list)
 
@@ -202,7 +203,6 @@ class GreedySolver(BaseModel):
 
             current_covered = sum(coverage[exp - 1][n][d] > 0 for n in range(self.N) for d in range(7))
             used_locations: set[int] = set([c for _, _, c in solution[exp - 1]])
-
 
             weight_list: list = []
             for n in range(self.N):
@@ -399,6 +399,153 @@ class GreedySolver(BaseModel):
 
         return solution
 
+    def grasp_construction(self, alpha: float) -> solution_type | None:
+        """
+        Builds a solution using a randomized greedy approach (RCL).
+        alpha = 0: Pure Greedy (always pick best)
+        alpha = 1: Pure Random (pick any valid move)
+        """
+        solution: solution_type = []
+        
+        # Reset coverage for this construction
+        current_coverage = [[0 for _ in range(7)] for _ in range(self.N)]
+        current_covered_count = 0
+        total_slots_to_cover = self.N * 7
+        
+        used_locations: set[int] = set()
+
+        # Weight list calculation (simplified version of your greedy logic for speed)
+        # Higher weight for crossings with many connections
+        effective_exponent = self.exponent * self.exponent_multiplier
+        weight_list: list = []
+        for n in range(self.N):
+            weight_list.append(pow(sum(self.M[n]), effective_exponent))
+
+        while current_covered_count < total_slots_to_cover:
+            candidates = [] # List of tuples: (ratio, move)
+            
+            # 1. Identify all valid candidate moves
+            for loc in range(self.N):
+                if loc in used_locations:
+                    continue
+
+                for cam_index in range(self.K):
+                    # Check autonomy validity
+                    autonomy = self.A[cam_index] - 2
+                    if not (0 <= autonomy < len(self.pattern_number)):
+                        continue
+                    
+                    max_pattern_index = self.pattern_number[autonomy]
+                    
+                    # Find reachable crossings
+                    crossing_reachable: list = []
+                    for target in range(self.N):
+                        if (self.M[loc][target] <= self.R[cam_index]) and (self.M[loc][target] < 50):
+                            crossing_reachable.append(target)
+                    
+                    if not crossing_reachable:
+                        continue
+
+                    # Evaluate patterns
+                    for pattern_index in range(max_pattern_index):
+                        # move_cost = self.compute_cost(cam_index, pattern_index)
+                        gain = 0
+                        
+                        # Calculate gain based on uncovered slots
+                        for d in self.pattern_indexes[pattern_index]:
+                            for target in crossing_reachable:
+                                if current_coverage[target][d] == 0:
+                                    # Use simple weights or your exponential weights here
+                                    gain += weight_list[target] 
+
+                        if gain > 0:
+                            move_cost = self.compute_cost(cam_index, pattern_index)
+                            ratio = move_cost / gain
+                            move = (cam_index, pattern_index, loc)
+                            candidates.append((ratio, move))
+
+            if not candidates:
+                # Should not happen if a feasible solution exists
+                return None
+
+            # 2. Build Restricted Candidate List (RCL)
+            # We want to MINIMIZE ratio (Cost / Gain)
+            candidates.sort(key=lambda x: x[0]) 
+            
+            min_ratio = candidates[0][0]
+            
+            # Threshold: moves with ratio <= min + alpha * (range)
+            threshold = min_ratio * (1 + alpha)
+            rcl = [move for ratio, move in candidates if ratio <= threshold]
+            
+            # 3. Pick random move from RCL
+            best_cam, best_pattern, best_loc = random.choice(rcl)
+            
+            # 4. Update state
+            solution.append((best_cam, best_pattern, best_loc))
+            used_locations.add(best_loc)
+            
+            reachable = []
+            for target in range(self.N):
+                if (self.M[best_loc][target] <= self.R[best_cam]) and (self.M[best_loc][target] < 50): 
+                    reachable.append(target)
+
+            for d in self.pattern_indexes[best_pattern]:
+                for target in reachable:
+                    if current_coverage[target][d] == 0:
+                        current_covered_count += 1
+                    current_coverage[target][d] += 1
+        
+        # Save the coverage state for the Local Search to use
+        self.coverage = current_coverage 
+        return solution
+
+    def run_grasp(self, max_iterations: int = 50, alpha: float = 0.2) -> solution_type:
+        """
+        Main GRASP Loop.
+        1. Randomized Construction
+        2. Local Search
+        3. Keep Best
+        """
+        best_solution: solution_type = []
+        best_cost = float('inf')
+
+        print(f"Starting GRASP: {max_iterations} iterations, alpha={alpha}")
+
+        for i in range(max_iterations):
+            # Phase 1: Construction
+            # We use a try-except block in case construction fails or produces invalid coverage
+            candidate_sol = self.grasp_construction(alpha)
+
+            if candidate_sol is None:
+                continue
+
+            try:
+                # Check feasibility immediately
+                improved_sol = self.local_search_2(candidate_sol, remove_percent=5) # Pruning
+                improved_sol = self.local_search_1(improved_sol) # Pattern optimization
+                
+                final_cost = self.check_validity_and_cost(improved_sol)
+
+                if final_cost < best_cost:
+                    best_cost = final_cost
+                    best_solution = improved_sol
+                    print(f"Iter {i+1}: New best found! Cost: {best_cost}")
+            except ValueError:
+                pass
+
+            # Phase 2: Local Search
+            # Apply your existing local search logic. 
+            # You can chain them (e.g., LS2 -> LS1)
+            
+            # Calculate final cost
+        
+        if not best_solution:
+            print("GRASP failed to find any solution")
+            return self.greedy()
+
+        return best_solution
+
 if __name__ == "__main__":
     data = sys.argv[1]
     solver = GreedySolver(
@@ -406,15 +553,20 @@ if __name__ == "__main__":
         exponent=10 # greedy weight exponent
     )
     # print(solver)
-    solution = solver.greedy()
-    cost_0: int = solver.check_validity_and_cost(solution)
-    print(f"cost: {cost_0:5}")
-    solution = solver.local_search_1(solution)
-    cost_1: int = solver.check_validity_and_cost(solution)
-    print(f"cost: {cost_0:5} > {cost_1:5} | % {(cost_0 - cost_1)/cost_0 * 100:2.2f}%")
-    solution = solver.local_search_0(solution, solver.local_search_2)
-    cost_1: int = solver.check_validity_and_cost(solution)
+   # print("---- Standard Greedy exec ----")
+   # solution = solver.greedy()
+   # cost_0: int = solver.check_validity_and_cost(solution)
+   # print(f"cost: {cost_0:5}")
+#    solution = solver.local_search_1(solution)
+#    cost_1: int = solver.check_validity_and_cost(solution)
+#    print(f"cost: {cost_0:5} > {cost_1:5} | % {(cost_0 - cost_1)/cost_0 * 100:2.2f}%")
+#    solution = solver.local_search_0(solution, solver.local_search_2)
+#    cost_1: int = solver.check_validity_and_cost(solution)
+    print("---- GRASP exec ----")
+    grasp_sol = solver.run_grasp(max_iterations=50, alpha=0.1)
+    cost_2: int = solver.check_validity_and_cost(grasp_sol)
     print(" FINAL RESULT ")
-    print(f"cost: {cost_0:5} > {cost_1:5} | % {(cost_0 - cost_1)/cost_0 * 100:2.2f}%")
-    solver.print_costs(solution)
+#    print(f"cost: {cost_0:5} > {cost_1:5} | % {(cost_0 - cost_1)/cost_0 * 100:2.2f}%")
+    print(f"cost: {cost_2:5}")
+    solver.print_costs(grasp_sol)
     
