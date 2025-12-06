@@ -128,8 +128,7 @@ class GreedyGrasp:
     
     def camera_gain(
         self, 
-        camera: int,
-        power: int = 1 # based on ?
+        camera: int
     ) -> float:
         purchase_cost: int = self.P[camera] # numberofcameras
         active_cost: int = self.C[camera]   # numberofcameras * activedays
@@ -137,11 +136,10 @@ class GreedyGrasp:
         reach: int = self.R[camera]         # numberofcameras
 
         # we multiply availability (active days) by 8,16 in order to reach the number of available pattern
-        # we divide by the cost
-        gain: float = (availability * 8.16 + reach) *100 / pow((purchase_cost + active_cost * 2), power)
-        # print(gain)
 
-        return gain
+        ratio: float = (purchase_cost + active_cost * 2) / (availability * 8.16 + reach)
+
+        return ratio
 
     def greedy_camera_first(
             self,
@@ -151,7 +149,7 @@ class GreedyGrasp:
 
         cameras = [c for c in range(self.K)]
 
-        sorted_cameras = sorted(cameras, key=lambda k: self.camera_gain(k), reverse=True)
+        sorted_cameras = sorted(cameras, key=lambda k: self.camera_gain(k))
 
         if start_solution is None:
             solution: list[solution_type] = [
