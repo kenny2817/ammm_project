@@ -35,7 +35,7 @@ class LocalSearch:
             benefit: float = 0
             for d in self.pattern_indexes[pattern]:
                 for target in reachable:
-                    benefit += 1/ pow(self.coverage[target][d], self.exponent)
+                    benefit += 1/ pow(self.coverage[target][d], exponent)
             cost: int = self.compute_cost(model, pattern)
             value: float = (benefit / cost)
             values.append(value)
