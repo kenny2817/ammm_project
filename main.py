@@ -2,6 +2,7 @@ import sys
 from core import SolverBase
 from heuristics.constructive import GreedyGrasp
 from heuristics.local_search import LocalSearch
+import time
 
 
 class GreedySolver(SolverBase, GreedyGrasp, LocalSearch):
@@ -32,8 +33,6 @@ if __name__ == "__main__":
 
     data_file: str = sys.argv[1]
     mode: str = sys.argv[2].lower().strip()
-    grasp_type: str = sys.argv[3].lower().strip()
-    exec_time: int = int(sys.argv[4])
 
     # 2. Initialize Solver
     solver = GreedySolver(
@@ -44,31 +43,47 @@ if __name__ == "__main__":
 
     # 3. Execute based on mode
     if mode == "greedy":
+        greedy_exec_time = 0
         print("---- Standard Greedy exec ----")
         
+        greedy_time = time.monotonic()
         # Try the new greedy_camera_first, fallback to standard greedy if it fails
         solution = solver.greedy_camera_first()
+        greedy_exec_time = time.monotonic() - greedy_time
         try:
             cost_0: int = solver.check_validity_and_cost(solution)
         except Exception as e:
             print(f"greedy_camera_first failed ({e}), reverting to standard greedy...")
+
+            greedy_time = time.monotonic()
             solution = solver.greedy()
+            greedy_exec_time = time.monotonic() - greedy_time
+            
             cost_0: int = solver.check_validity_and_cost(solution)
             
-        print(f"Initial Cost: {cost_0:5}")
+        print(f"Initial Cost: {cost_0:5}. Time for greedy execution: {greedy_exec_time} ms, {greedy_exec_time / 1000} s")
         solver.print_costs(solution)
 
         # Apply Local Search
         print("\n--- Running Local Search ---")
+
+        local_search_3_time = time.monotonic()
         solution = solver.local_search_0(solution, solver.local_search_3)
+        greedy_exec_time += time.monotonic() - local_search_3_time
         cost_1: int = solver.check_validity_and_cost(solution)
-        print(f"LS Cost: {cost_0:5} > {cost_1:5} | Improvement: {(cost_0 - cost_1)/cost_0 * 100:2.2f}%")
-        
+
+        local_search_2_time = time.monotonic()
         solution = solver.local_search_0(solution, solver.local_search_2)
+        greedy_exec_time += time.monotonic() - local_search_2_time
+
+        print(f"LS Cost: {cost_0:5} > {cost_1:5} | Improvement: {(cost_0 - cost_1)/cost_0 * 100:2.2f}%")
         cost_final: int = solver.check_validity_and_cost(solution)
         solver.print_costs(solution)
+        print(f"Greedy+local search execution time: {greedy_exec_time} ms, {greedy_exec_time / 1000} s")
 
     elif mode == "grasp":
+        grasp_type: str = sys.argv[3].lower().strip()
+        exec_time: int = int(sys.argv[4])
         if grasp_type != "full" and grasp_type != "elements":
             print(f"Error: invalid grasp type: '{grasp_type}'.")
             print("Available choices: 'full' or 'elements'")

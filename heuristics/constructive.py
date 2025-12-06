@@ -138,7 +138,7 @@ class GreedyGrasp:
 
         # we multiply availability (active days) by 8,16 in order to reach the number of available pattern
         # we divide by the cost
-        gain: float = (availability * 8,16 + reach) *100 / pow((purchase_cost + active_cost * 2), power)
+        gain: float = (availability * 8.16 + reach) *100 / pow((purchase_cost + active_cost * 2), power)
         # print(gain)
 
         return gain
