@@ -24,8 +24,14 @@ if __name__ == "__main__":
         print("  <mode>     : 'greedy' or 'grasp'")
         sys.exit(1)
 
+    if sys.argv[2].lower().strip() == "grasp" and len(sys.argv) < 4:
+        print(f"Usage: python {sys.argv[0]} <data_file> <mode> <grasp_type>")
+        print("  <grasp_type> : 'full', 'elements' or 'solutions'")
+        sys.exit(1)
+
     data_file = sys.argv[1]
     mode = sys.argv[2].lower().strip()
+    grasp_type = sys.argv[3].lower().strip()
 
     # 2. Initialize Solver
     solver = GreedySolver(
@@ -61,11 +67,14 @@ if __name__ == "__main__":
         solver.print_costs(solution)
 
     elif mode == "grasp":
-        print("---- GRASP exec ----")
+        if grasp_type != "full" and grasp_type != "elements":
+            print(f"Error: invalid grasp type: '{grasp_type}'.")
+            print("Available choices: 'full' or 'elements'")
+            sys.exit(1)
+        
         
         # Uncommented and active GRASP logic
-        grasp_sol = solver.run_grasp(max_iterations=50, alpha=0.1)
-        cost_2: int = solver.check_validity_and_cost(grasp_sol)
+        grasp_sol, cost_2 = solver.run_grasp(grasp_type, max_iterations=20, alpha=0.1)
         
         print(" FINAL RESULT ")
         print(f"GRASP Cost: {cost_2:5}")

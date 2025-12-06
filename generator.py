@@ -1,5 +1,5 @@
 import random
-from parser import parse_dat_file
+from dat_parser import parse_dat_file
 
 
 def generate_dat_file(config_filename: str, output_filename: str, debug: bool = False) -> str:
@@ -76,6 +76,6 @@ def generate_dat_file(config_filename: str, output_filename: str, debug: bool = 
 
 
 if __name__ == "__main__":
-    config_filename = "p.dat"
-    output_filename = "random_output.dat"
+    config_filename = "test_case/p.dat"
+    output_filename = "random_output1.dat"
     generate_dat_file(config_filename, output_filename, debug=True)
