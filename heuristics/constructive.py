@@ -1,6 +1,7 @@
 from math import pow
 import random
 from common_types import solution_type
+import time
 
 class GreedyGrasp:
     def greedy(
@@ -520,7 +521,7 @@ class GreedyGrasp:
         else:
             return None
 
-    def run_grasp(self, grasp_type: str, max_iterations: int = 10, alpha: float = 0.2) -> tuple[solution_type, int]:
+    def run_grasp(self, grasp_type: str, exec_time: int = 60, alpha: float = 0.2) -> tuple[solution_type, int]:
         """
         Main GRASP Loop.
         1. Randomized Construction
@@ -529,10 +530,11 @@ class GreedyGrasp:
         """
         best_solution: solution_type = []
         best_cost = float('inf')
+        stopping_time = time.monotonic() + exec_time
 
-        print(f"Starting GRASP: {max_iterations} iterations, alpha={alpha}")
+        print(f"Starting GRASP: alpha={alpha}")
 
-        for i in range(max_iterations):
+        while time.monotonic() < stopping_time:
             # Phase 1: Construction
             # We use a try-except block in case construction fails or produces invalid coverage
 
@@ -554,11 +556,8 @@ class GreedyGrasp:
                 if final_cost < best_cost:
                     best_cost = final_cost
                     best_solution = improved_sol
-                    print(f"Iter {i+1}: New best found! Cost: {best_cost}")
-                else:
-                    print(f"Iter {i+1}")
+                    print(f"New best found! Cost: {best_cost}")
             except ValueError as e:
-                print(f"Iter {i+1}: {e}")
                 pass
 
             # Phase 2: Local Search
