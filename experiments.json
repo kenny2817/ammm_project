@@ -1,0 +1,26 @@
+[
+    {
+        "id": "test_greedy_basic_01",
+        "type": "python",
+        "data_file": "test_case/project.15.dat",
+        "mode": "greedy",
+        "exponent": 10,
+        "alpha": 0.0
+    },
+    {
+        "id": "test_grasp_full_01",
+        "type": "python",
+        "data_file": "test_case/project.15.dat",
+        "mode": "grasp",
+        "grasp_type": "full",
+        "exponent": 5,
+        "alpha": 0.1,
+        "max_time": 60
+    },
+    {
+        "id": "test_cplex_opl_01",
+        "type": "opl",
+        "model_file": "opl_models/p_01.mod",
+        "data_file": "test_case/project.15.dat"
+    }
+]
