@@ -64,19 +64,7 @@ class GreedyGrasp:
 
                         # l'autonomia è da 2 a 6, risolvo l'offset partendo da zero
                         autonomy = self.A[cam_index] - 2
-                        if 0 <= autonomy < len(self.pattern_number):
-                            max_pattern_index = self.pattern_number[autonomy]
-                        else:
-                            continue
-
-                        # salvo gli incroci raggiungibili dalla videocamera con indice cam_index
-                        crossing_reachable: list = []
-                        for target in range(self.N):
-                            if (self.M[loc][target] <= self.R[cam_index]) and (self.M[loc][target] < 50):
-                                crossing_reachable.append(target)
-                                
-                        if not crossing_reachable:
-                            continue
+                        max_pattern_index = self.pattern_number[autonomy]
 
                         # verifico per pattern, durante tutta la settimana,
                         # il migliore gain e quindi seleziono la migliore scelta
@@ -87,7 +75,7 @@ class GreedyGrasp:
                             gain = 0
 
                             for d in self.pattern_indexes[pattern_index]:
-                                for target in crossing_reachable:
+                                for target in self.cross_model_reach[loc][self.R[cam_index]]:
                                     if coverage[exp - 1][target][d] == 0:
                                         gain += weight_list[target]
 
@@ -219,24 +207,9 @@ class GreedyGrasp:
                         if loc in used_locations:
                             continue
 
-                        # per ogni camera
-                        # for cam_index in range(self.K):
-
                         # l'autonomia è da 2 a 6, risolvo l'offset partendo da zero
                         autonomy = self.A[cam_index] - 2
-                        if 0 <= autonomy < len(self.pattern_number):
-                            max_pattern_index = self.pattern_number[autonomy]
-                        else:
-                            continue
-
-                        # salvo gli incroci raggiungibili dalla videocamera con indice cam_index
-                        crossing_reachable: list = []
-                        for target in range(self.N):
-                            if (self.M[loc][target] <= self.R[cam_index]) and (self.M[loc][target] < 50):
-                                crossing_reachable.append(target)
-                                
-                        if not crossing_reachable:
-                            continue
+                        max_pattern_index = self.pattern_number[autonomy]
 
                         # verifico per pattern, durante tutta la settimana,
                         # il migliore gain e quindi seleziono la migliore scelta
@@ -247,7 +220,7 @@ class GreedyGrasp:
                             gain = 0
 
                             for d in self.pattern_indexes[pattern_index]:
-                                for target in crossing_reachable:
+                                for target in self.cross_model_reach[loc][self.R[cam_index]]:
                                     if coverage[exp - 1][target][d] == 0:
                                         gain += weight_list[target]
 

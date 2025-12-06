@@ -23,13 +23,13 @@ range N_range = 1..N;
 
 // Week up time permutations
 int permutations[Week][Permutation_range] = [
-  [1,0,0,0,0,0,1, 1,0,1,1,0,0,1, 1,0,0,0,0,1,1, 1,0,1,1,1,0,1, 1,0,0,1,1,1,1, 1,0,1,1,1,1,1, 1,0,1,1,1,1,1], // Day 1
-  [1,1,0,0,0,0,0, 1,1,0,1,1,0,0, 1,1,0,0,0,0,1, 1,1,0,1,1,1,0, 1,1,0,0,1,1,1, 1,1,0,1,1,1,1, 1,1,0,1,1,1,1], // Day 2
-  [0,1,1,0,0,0,0, 0,1,1,0,1,1,0, 1,1,1,0,0,0,0, 0,1,1,0,1,1,1, 1,1,1,0,0,1,1, 1,1,1,0,1,1,1, 1,1,1,0,1,1,1], // Day 3
-  [0,0,1,1,0,0,0, 0,0,1,1,0,1,1, 0,1,1,1,0,0,0, 1,0,1,1,0,1,1, 1,1,1,1,0,0,1, 1,1,1,1,0,1,1, 1,1,1,1,0,1,1], // Day 4
-  [0,0,0,1,1,0,0, 1,0,0,1,1,0,1, 0,0,1,1,1,0,0, 1,1,0,1,1,0,1, 1,1,1,1,1,0,0, 1,1,1,1,1,0,1, 1,1,1,1,1,0,1], // Day 5
-  [0,0,0,0,1,1,0, 1,1,0,0,1,1,0, 0,0,0,1,1,1,0, 1,1,1,0,1,1,0, 0,1,1,1,1,1,0, 1,1,1,1,1,1,0, 1,1,1,1,1,1,0], // Day 6
-  [0,0,0,0,0,1,1, 0,1,1,0,0,1,1, 0,0,0,0,1,1,1, 0,1,1,1,0,1,1, 0,0,1,1,1,1,1, 0,1,1,1,1,1,1, 0,1,1,1,1,1,1]  // Day 7
+  [1,0,0,0,0,0,1, 1,0,1,1,0,0,1, 1,0,0,0,0,1,1, 1,0,1,1,1,0,1, 1,0,0,0,1,1,1, 1,0,0,1,1,1,1, 1,0,1,1,1,1,1], // Day 1
+  [1,1,0,0,0,0,0, 1,1,0,1,1,0,0, 1,1,0,0,0,0,1, 1,1,0,1,1,1,0, 1,1,0,0,0,1,1, 1,1,0,0,1,1,1, 1,1,0,1,1,1,1], // Day 2
+  [0,1,1,0,0,0,0, 0,1,1,0,1,1,0, 1,1,1,0,0,0,0, 0,1,1,0,1,1,1, 1,1,1,0,0,0,1, 1,1,1,0,0,1,1, 1,1,1,0,1,1,1], // Day 3
+  [0,0,1,1,0,0,0, 0,0,1,1,0,1,1, 0,1,1,1,0,0,0, 1,0,1,1,0,1,1, 1,1,1,1,0,0,0, 1,1,1,1,0,0,1, 1,1,1,1,0,1,1], // Day 4
+  [0,0,0,1,1,0,0, 1,0,0,1,1,0,1, 0,0,1,1,1,0,0, 1,1,0,1,1,0,1, 0,1,1,1,1,0,0, 1,1,1,1,1,0,0, 1,1,1,1,1,0,1], // Day 5
+  [0,0,0,0,1,1,0, 1,1,0,0,1,1,0, 0,0,0,1,1,1,0, 1,1,1,0,1,1,0, 0,0,1,1,1,1,0, 0,1,1,1,1,1,0, 1,1,1,1,1,1,0], // Day 6
+  [0,0,0,0,0,1,1, 0,1,1,0,0,1,1, 0,0,0,0,1,1,1, 0,1,1,1,0,1,1, 0,0,0,1,1,1,1, 0,0,1,1,1,1,1, 0,1,1,1,1,1,1]  // Day 7
 ];
 
 // cost in days
@@ -77,4 +77,82 @@ execute {
         write(" ", permutations[d][p]);
       writeln(" ]");
     }
+}
+
+execute {
+  writeln("=================================================");
+  writeln("SOLUTION REPORT");
+  writeln("=================================================");
+  
+  // 1. LIST INSTALLED CAMERAS
+  writeln("--- INSTALLED CAMERAS ---");
+  for (var i in N_range) {
+    for(var k in K_range) {
+       for(var p in Permutation_range) {
+          if (x[i][k][p] == 1) {
+             write("Location: ", i, " | Type: ", k, " | Pattern: ", p, " | Active Days: [");
+             for (var d in Week) {
+               if(permutations[d][p] == 1) write(" ", d);
+             }
+             writeln(" ]");
+          }
+       }
+    }
+  }
+
+  // 2. SPATIAL COVERAGE (Who covers whom?)
+  writeln("\n--- SPATIAL REACH (Physical Radius) ---");
+  for (var i in N_range) {
+    for(var k in K_range) {
+       for(var p in Permutation_range) {
+          if (x[i][k][p] == 1) {
+             write("Cam at ", i, " (Type ", k, ") covers points: ");
+             var count = 0;
+             for (var j in N_range) {
+                if (CanCover[j][i][k] == 1) {
+                   write(j, " ");
+                   count++;
+                }
+             }
+             writeln("(Total: ", count, ")");
+          }
+       }
+    }
+  }
+
+  // 3. WEEKLY COVERAGE HEATMAP (The Visualization)
+  // This shows how many cameras cover point J on Day D.
+  // 0 means a constraint violation (Gap). >1 means overlap.
+  writeln("\n--- WEEKLY COVERAGE HEATMAP ---");
+  writeln("(Rows = Locations, Cols = Days Mon-Sun. Value = # of cameras covering)");
+  
+  write("LLoc\t");
+  for(var d in Week) write("D", d, "\t");
+  writeln();
+  
+  for (var j in N_range) {
+     write("LL", j, ":\t");
+     for (var d in Week) {
+        var coverageCount = 0;
+        
+        // Sum up all active cameras covering point j on day d
+        for (var i in N_range) {
+           for (var k in K_range) {
+              for (var p in Permutation_range) {
+                 if (x[i][k][p] == 1) {
+                    // Check if camera is active this day AND can physically cover j
+                    if (permutations[d][p] == 1 && CanCover[j][i][k] == 1) {
+                       coverageCount++;
+                    }
+                 }
+              }
+           }
+        }
+        
+        // Visual indicator: 'X' for 0 (Error), Number for coverage count
+        if (coverageCount == 0) write("X\t"); // Should not happen if feasible
+        else write(coverageCount, "\t");
+     }
+     writeln();
+  }
 }
