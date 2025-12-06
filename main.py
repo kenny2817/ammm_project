@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     if sys.argv[2].lower().strip() == "grasp" and len(sys.argv) < 4:
         print(f"Usage: python {sys.argv[0]} <data_file> <mode> <grasp_type>")
-        print("  <grasp_type> : 'full', 'elements' or 'solutions'")
+        print("  <grasp_type> : 'full' or 'elements'")
         sys.exit(1)
 
     data_file = sys.argv[1]

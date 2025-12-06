@@ -55,21 +55,21 @@ class GreedyGrasp:
                 current_best_ratio = float('inf')
                 best_move  = None
 
-                # loop per ogni incrocio dove voglio posizionare la mia camera
+                # loop for each crossing in which we want to put the camera
                 for loc in range(self.N):
                     if loc in used_locations:
                         continue
 
-                    # per ogni camera
+                    # for each camera
                     for cam_index in range(self.K):
 
-                        # l'autonomia è da 2 a 6, risolvo l'offset partendo da zero
+                        # autonomy is from 2 to 6, starting offset from zero
                         autonomy = self.A[cam_index] - 2
                         max_pattern_index = self.pattern_number[autonomy]
 
-                        # verifico per pattern, durante tutta la settimana,
-                        # il migliore gain e quindi seleziono la migliore scelta
-                        # data da cam_index, pattern_index e loc (incrocio dove si trova la camera)
+                        # check the pattern, across all week,
+                        # the best gain and then select the best choice
+                        # given by cam_index pattern_index and loc (crossing where the camera is located) 
                         for pattern_index in range(max_pattern_index):
                             gain = 0
 
@@ -82,8 +82,8 @@ class GreedyGrasp:
                                 move_cost = self.compute_cost(cam_index, pattern_index)
                                 ratio = move_cost / gain
                                 # print(f"pattern {pattern_index}, ratio: {ratio} camera: {cam_index} incrocio: {loc}")
-                                # se il ratio è migliore di quello trovato precedentemente
-                                # scelgo questa combinazione di camera, pattern e incrocio
+                                # if the ratio is better than the last one, chose this
+                                # combination of camera, pattern and crossing
                                 if ratio < current_best_ratio:
                                     current_best_ratio = ratio
                                     best_move = (cam_index, pattern_index, loc, gain)
@@ -91,28 +91,27 @@ class GreedyGrasp:
                 if best_move:
                     best_cam, best_pattern, best_loc, _ = best_move
 
-                    # aggiungo la combinazione all'insieme di soluzioni
+                    # add the combination to the set of solutions
                     solution[exp - 1].append((best_cam, best_pattern, best_loc))
                     used_locations.add(best_loc)
 
                     reachable = []
-                    # aggiungo ai reachable gli incroci coperti dalla videocamera
-                    # posta all'incrocio best_loc
+                    # add to the reachable the crossings covered from camera at
+                    # best_loc crossing
                     for target in range(self.N):
                         if (self.M[best_loc][target] <= self.R[best_cam]) and (self.M[best_loc][target] < 50): 
                             reachable.append(target)
 
                     for d in self.pattern_indexes[best_pattern]:
-                            # per ogni incrocio coperto (cioè presente in reachable)
-                            # se non è presente in coverage lo aggiungo e incremento di 1
-                            # il contatore dei current_covered
+                            # add a crossing in covered crossing to coverage (if it's not in it)
+                            # and increment current_covered by 1 
                         for target in reachable:
                             if coverage[exp - 1][target][d] == 0:
                                 current_covered += 1
                             coverage[exp - 1][target][d] += 1
                 else:
-                    # se non sono riuscito a trovare una best move significa che
-                    # non avrò coperto alcuni incrocio in alcuni giorni della settimana
+                    # if we haven't managed to find a best move it means that
+                    # we haven't covered some crossings in some days of the week
                     print(f"Only covered {current_covered}/{total_slots_to_cover} slots.")
                     break
                 
@@ -136,7 +135,9 @@ class GreedyGrasp:
         availability: int  = self.A[camera] # activedays
         reach: int = self.R[camera]         # numberofcameras
 
-        gain: float = (availability * 8 + reach) *100 / pow((purchase_cost + active_cost * 2), power)
+        # we multiply availability (active days) by 8,16 in order to reach the number of available pattern
+        # we divide by the cost
+        gain: float = (availability * 8,16 + reach) *100 / pow((purchase_cost + active_cost * 2), power)
         # print(gain)
 
         return gain
@@ -201,18 +202,18 @@ class GreedyGrasp:
                     current_best_ratio = float('inf')
                     best_move  = None
 
-                    # loop per ogni incrocio dove voglio posizionare la mia camera
+                    # loop for each crossing in which we want to put the camera
                     for loc in range(self.N):
                         if loc in used_locations:
                             continue
 
-                        # l'autonomia è da 2 a 6, risolvo l'offset partendo da zero
+                        # autonomy is from 2 to 6, starting offset from zero
                         autonomy = self.A[cam_index] - 2
                         max_pattern_index = self.pattern_number[autonomy]
 
-                        # verifico per pattern, durante tutta la settimana,
-                        # il migliore gain e quindi seleziono la migliore scelta
-                        # data da cam_index, pattern_index e loc (incrocio dove si trova la camera)
+                         # check the pattern, across all week,
+                        # the best gain and then select the best choice
+                        # given by cam_index pattern_index and loc (crossing where the camera is located) 
                         for pattern_index in range(max_pattern_index):
                             move_cost = self.compute_cost(cam_index, pattern_index)
 
@@ -226,8 +227,8 @@ class GreedyGrasp:
                             if gain > 0:
                                 ratio = move_cost / gain
                                 # print(f"pattern {pattern_index}, ratio: {ratio} camera: {cam_index} incrocio: {loc}")
-                                # se il ratio è migliore di quello trovato precedentemente
-                                # scelgo questa combinazione di camera, pattern e incrocio
+                                # if the ratio is better than the last one, chose this
+                                # combination of camera, pattern and crossing
                                 if ratio < current_best_ratio:
                                     
                                     current_best_ratio = ratio
@@ -236,28 +237,27 @@ class GreedyGrasp:
                     if best_move:
                         best_cam, best_pattern, best_loc, _ = best_move
 
-                        # aggiungo la combinazione all'insieme di soluzioni
+                        # add the combination to the set of solutions
                         solution[exp - 1].append((best_cam, best_pattern, best_loc))
                         used_locations.add(best_loc)
 
                         reachable = []
-                        # aggiungo ai reachable gli incroci coperti dalla videocamera
-                        # posta all'incrocio best_loc
+                        # add to the reachable the crossings covered from camera at
+                        # best_loc crossing
                         for target in range(self.N):
                             if (self.M[best_loc][target] <= self.R[best_cam]) and (self.M[best_loc][target] < 50): 
                                 reachable.append(target)
 
                         for d in self.pattern_indexes[best_pattern]:
-                                # per ogni incrocio coperto (cioè presente in reachable)
-                                # se non è presente in coverage lo aggiungo e incremento di 1
-                                # il contatore dei current_covered
+                                # add a crossing in covered crossing to coverage (if it's not in it)
+                                # and increment current_covered by 1
                             for target in reachable:
                                 if coverage[exp - 1][target][d] == 0:
                                     current_covered += 1
                                 coverage[exp - 1][target][d] += 1
                     else:
-                        # se non sono riuscito a trovare una best move significa che
-                        # non avrò coperto alcuni incrocio in alcuni giorni della settimana
+                        # if we haven't managed to find a best move it means that
+                        # we haven't covered some crossings in some days of the week
                         print(f"Only covered {current_covered}/{total_slots_to_cover} slots.")
                         break
                 
