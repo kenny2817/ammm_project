@@ -1,7 +1,7 @@
 
 execute {
-    // cplex.threads = 1;
-    cplex.Tilim = 30
+    cplex.threads = 1;
+   //  cplex.Tilim = 30;
 }
 
 // Parameters =====================================================================================

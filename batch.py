@@ -148,10 +148,19 @@ def execute_experiment_batch(config, iterations=3):
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python batch.py <config_file.json>")
+        print("Usage: python batch.py <config_file.json> [max_workers]")
+        print("Example: python batch.py experiments.json 4")
         sys.exit(1)
 
     config_file = sys.argv[1]
+    
+    if len(sys.argv) >= 3:
+        max_workers = int(sys.argv[2])
+    else:
+        # Default behavior: Use all available CPUs 
+        max_workers = os.cpu_count()
+
+    print(f"--- Running with {max_workers} concurrent process(es) ---")
     
     # Ensure logs directory exists
     os.makedirs("logs", exist_ok=True)
@@ -164,7 +173,7 @@ def main():
     
     # Run in parallel
     # Use max_workers based on your CPU cores
-    with ProcessPoolExecutor() as executor:
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
         future_to_exp = {executor.submit(execute_experiment_batch, exp): exp for exp in experiments}
         
         for future in as_completed(future_to_exp):
@@ -175,11 +184,15 @@ def main():
 
     # Write Output to CSV
     output_file = "batch_results.csv"
-    with open(output_file, 'w', newline='') as csvfile:
+    file_exists = os.path.isfile(output_file) and os.path.getsize(output_file) > 0
+
+    with open(output_file, 'a', newline='') as csvfile:
         fieldnames = ['TestID', 'AvgCost', 'MinCost', 'MaxCost', 'AvgTime', 'MinTime', 'MaxTime', 'SuccessRate']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
-        writer.writeheader()
+        
+        if not file_exists:
+            writer.writeheader()
+        
         for r in results:
             writer.writerow({
                 'TestID': r.test_id,
