@@ -22,9 +22,7 @@
         "type": "opl",
         "model_file": "opl_models/p_01.mod",
         "data_file": "test_case/final/output_seed_1807_K5_N30.dat"
-    }
-]
-[
+    },
     {
         "id": "test2_greedy_basic_01",
         "type": "python",
@@ -48,9 +46,7 @@
         "type": "opl",
         "model_file": "opl_models/p_01.mod",
         "data_file": "output_seed_2726_K5_N20.dat"
-    }
-]
-[
+    },
     {
         "id": "test3_greedy_basic_01",
         "type": "python",
