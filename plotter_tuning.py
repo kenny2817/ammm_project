@@ -63,7 +63,7 @@ for i, tc in enumerate(unique_cases):
                 cbar_kws={'label': '% Diff from Baseline Cost'})
     
     base_val = baselines.get(tc, 'N/A')
-    ax.set_title(f'Test Case {tc}\n(Baseline Cost: {base_val})')
+    ax.set_title(f'Test Case {tc}')
     ax.set_xlabel('Exponent')
     if i > 0:
         ax.set_ylabel('')
