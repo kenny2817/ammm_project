@@ -128,7 +128,8 @@ class LocalSearch:
     def local_search_0(
         self, 
         solution: solution_type,
-        search_strategy: callable
+        search_strategy: callable,
+        debug: bool = False
     ) -> solution_type:
                 
         cost_0: int = 1
@@ -141,7 +142,8 @@ class LocalSearch:
             solution = search_strategy(solution)
             try:
                 cost_1 = self.check_validity_and_cost(solution)
-                print(f"cost: {cost_0:5} > {cost_1:5} | % {(cost_0 - cost_1)/cost_0 * 100:2.2f}%")
+                if debug:
+                    print(f"cost: {cost_0:5} > {cost_1:5} | % {(cost_0 - cost_1)/cost_0 * 100:2.2f}%")
             except:
                 break
 

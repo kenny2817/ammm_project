@@ -519,7 +519,13 @@ class GreedyGrasp:
         else:
             return None
 
-    def run_grasp(self, grasp_type: str, exec_time: int = 60, alpha: float = 0.2) -> tuple[solution_type, int]:
+    def run_grasp(
+        self, 
+        grasp_type: str, 
+        exec_time: int = 60, 
+        alpha: float = 0.2,
+        debug: bool = False
+    ) -> tuple[solution_type, int]:
         """
         Main GRASP Loop.
         1. Randomized Construction
@@ -530,7 +536,8 @@ class GreedyGrasp:
         best_cost = float('inf')
         stopping_time = time.monotonic() + exec_time
 
-        print(f"Starting GRASP: alpha={alpha}")
+        if debug:
+            print(f"Starting GRASP: alpha={alpha}")
 
         while time.monotonic() < stopping_time:
             # Phase 1: Construction
@@ -554,7 +561,8 @@ class GreedyGrasp:
                 if final_cost < best_cost:
                     best_cost = final_cost
                     best_solution = improved_sol
-                    print(f"New best found! Cost: {best_cost}")
+                    if debug:
+                        print(f"New best found! Cost: {best_cost}")
             except ValueError as e:
                 pass
 
