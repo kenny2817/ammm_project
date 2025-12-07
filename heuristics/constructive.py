@@ -144,7 +144,8 @@ class GreedyGrasp:
     def greedy_camera_first(
             self,
             start_solution: solution_type | None = None,
-            start_coverage: list[list[int]] | None = None
+            start_coverage: list[list[int]] | None = None,
+            debug: bool = False
         ) -> solution_type:
 
         cameras = [c for c in range(self.K)]
@@ -264,7 +265,8 @@ class GreedyGrasp:
                     cost.append(0)
                     for (k, p, c) in solution[exp -1]:
                         cost[-1] += self.compute_cost(k, p) 
-                    # print("cost:", exp, cost[exp - 1])
+                    if debug:
+                        print("cost:", exp, cost[-1])
             
             if len(cost) > 0:
                 break
