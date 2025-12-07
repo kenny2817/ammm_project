@@ -1,0 +1,113 @@
+
+<<< setup
+
+
+<<< generate
+
+Version identifier: 12.10.0.0 | 2019-11-26 | 843d4de
+CPXPARAM_Threads                                 1
+Tried aggregator 1 time.
+MIP Presolve eliminated 9800 rows and 7555 columns.
+Reduced MIP has 160 rows, 2245 columns, and 98526 nonzeros.
+Reduced MIP has 2245 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0,09 sec. (181,78 ticks)
+Found incumbent of value 1263,000000 after 0,09 sec. (196,31 ticks)
+Tried aggregator 1 time.
+MIP Presolve eliminated 0 rows and 997 columns.
+Reduced MIP has 160 rows, 1248 columns, and 67674 nonzeros.
+Reduced MIP has 1248 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0,02 sec. (42,20 ticks)
+Probing time = 0,00 sec. (2,65 ticks)
+Tried aggregator 1 time.
+MIP Presolve eliminated 0 rows and 268 columns.
+Reduced MIP has 160 rows, 980 columns, and 62286 nonzeros.
+Reduced MIP has 980 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0,01 sec. (23,14 ticks)
+Probing time = 0,00 sec. (2,41 ticks)
+Tried aggregator 1 time.
+Detecting symmetries...
+MIP Presolve eliminated 28 rows and 0 columns.
+Reduced MIP has 132 rows, 980 columns, and 48279 nonzeros.
+Reduced MIP has 980 binaries, 0 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0,02 sec. (43,47 ticks)
+Probing time = 0,00 sec. (2,38 ticks)
+Clique table members: 20.
+MIP emphasis: balance optimality and feasibility.
+MIP search method: dynamic search.
+Parallel mode: none, using 1 thread.
+Root relaxation solution time = 0,01 sec. (48,34 ticks)
+
+        Nodes                                         Cuts/
+   Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
+
+*     0+    0                         1263,0000        0,0000           100,00%
+      0     0      252,6087    70     1263,0000      252,6087      436   80,00%
+*     0+    0                          394,0000      252,6087            35,89%
+      0     0      317,1957    70      394,0000  ZeroHalf: 10      557   19,49%
+      0     0      353,3696    70      394,0000       Cuts: 3      816   10,31%
+      0     0      371,2812    70      394,0000   ZeroHalf: 2      862    5,77%
+      0     0      377,8750    70      394,0000   ZeroHalf: 2      881    4,09%
+      0     0      389,0000    70      394,0000   ZeroHalf: 2      892    1,27%
+      0     0      389,0000    70      394,0000   ZeroHalf: 1      897    1,27%
+      0     0        cutoff            394,0000                    899    0,00%
+Elapsed time = 0,26 sec. (622,04 ticks, tree = 0,01 MB, solutions = 2)
+
+Zero-half cuts applied:  13
+Gomory fractional cuts applied:  1
+
+Root node processing (before b&c):
+  Real time             =    0,26 sec. (622,37 ticks)
+Sequential b&c:
+  Real time             =    0,00 sec. (0,00 ticks)
+                          ------------
+Total (root+branch&cut) =    0,26 sec. (622,37 ticks)
+
+<<< solve
+
+
+OBJECTIVE: 394
+crossing:3 model:3	[ 1 1 1 0 0 1 1 ]
+crossing:18 model:3	[ 0 0 0 1 1 1 1 ]
+crossing:19 model:3	[ 1 1 1 1 1 0 0 ]
+=================================================
+SOLUTION REPORT
+=================================================
+--- INSTALLED CAMERAS ---
+Location: 3 | Type: 3 | Pattern: 41 | Active Days: [ 1 2 3 6 7 ]
+Location: 18 | Type: 3 | Pattern: 32 | Active Days: [ 4 5 6 7 ]
+Location: 19 | Type: 3 | Pattern: 36 | Active Days: [ 1 2 3 4 5 ]
+
+--- SPATIAL REACH (Physical Radius) ---
+Cam at 3 (Type 3) covers points: 1 2 3 4 5 7 8 9 10 11 12 13 14 15 16 17 18 19 20 (Total: 19)
+Cam at 18 (Type 3) covers points: 1 3 4 5 6 7 8 11 12 13 14 15 16 18 19 20 (Total: 16)
+Cam at 19 (Type 3) covers points: 1 2 3 5 6 7 8 9 10 11 13 17 18 19 (Total: 14)
+
+--- WEEKLY COVERAGE HEATMAP ---
+(Rows = Locations, Cols = Days Mon-Sun. Value = # of cameras covering)
+LLoc	D1	D2	D3	D4	D5	D6	D7	
+LL1:	2	2	2	2	2	2	2	
+LL2:	2	2	2	1	1	1	1	
+LL3:	2	2	2	2	2	2	2	
+LL4:	1	1	1	1	1	2	2	
+LL5:	2	2	2	2	2	2	2	
+LL6:	1	1	1	2	2	1	1	
+LL7:	2	2	2	2	2	2	2	
+LL8:	2	2	2	2	2	2	2	
+LL9:	2	2	2	1	1	1	1	
+LL10:	2	2	2	1	1	1	1	
+LL11:	2	2	2	2	2	2	2	
+LL12:	1	1	1	1	1	2	2	
+LL13:	2	2	2	2	2	2	2	
+LL14:	1	1	1	1	1	2	2	
+LL15:	1	1	1	1	1	2	2	
+LL16:	1	1	1	1	1	2	2	
+LL17:	2	2	2	1	1	1	1	
+LL18:	2	2	2	2	2	2	2	
+LL19:	2	2	2	2	2	2	2	
+LL20:	1	1	1	1	1	2	2	
+
+<<< post process
+
+
+<<< done
+
