@@ -2,14 +2,14 @@
 
 ## To Do List
 
-- [ ] State the problem formally (i/o, aux sets of indices, obj function)
+- [x] State the problem formally (i/o, aux sets of indices, obj function)
 - [x] Build ILP model, implement in OPL
-- [ ] Design three heuristic algorithms
-  - [ ] greedy
-  - [ ] greedy + local search
-  - [ ] GRASP as meta-heuristic
+- [x] Design three heuristic algorithms
+  - [x] greedy
+  - [x] greedy + local search
+  - [x] GRASP as meta-heuristic
 - [ ] Tuning of parameters and instance gen
-  - [ ] Implement instance generator
+  - [x] Implement instance generator
   - [ ] Tune the alpha parameter of GRASP phase with set of reandom gen instances
   - [ ] Generate problem size with increasingly size. Solve with CPLEX
 - [ ] Compare CPLEX performance with heuristic algorithms (computation time and quality of solutions)
