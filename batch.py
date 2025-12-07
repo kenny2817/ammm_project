@@ -183,7 +183,7 @@ def main():
                 print(f"Finished: {res.test_id} | Avg Cost: {res.avg_cost:.2f} | Avg Time: {res.avg_time:.4f}s")
 
     # Write Output to CSV
-    output_file = "batch_results.csv"
+    output_file = "batch_results_tuning_1.csv"
     file_exists = os.path.isfile(output_file) and os.path.getsize(output_file) > 0
 
     with open(output_file, 'a', newline='') as csvfile:

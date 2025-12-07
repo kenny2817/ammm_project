@@ -1,8 +1,8 @@
 import random
 from dat_parser import parse_dat_file
+import secrets
 
-
-def generate_dat_file(config_filename: str, output_filename: str, debug: bool = False) -> str:
+def generate_dat_file(config_filename: str, seed_override: int | None = None, K_override: int | None = None, N_override: int | None = None, debug: bool = False) -> str:
     """
     Generates the content for a new .dat file based on config parameters.
     """
@@ -18,6 +18,13 @@ def generate_dat_file(config_filename: str, output_filename: str, debug: bool = 
     except KeyError as e:
         print(f"Error: Missing required config parameter: {e}")
         return ""
+    
+    if K_override is not None:
+        K = K_override
+    if N_override is not None:
+        N = N_override
+    if seed_override is not None:
+        seed = seed_override
 
     random.seed(seed)
 
@@ -71,11 +78,20 @@ def generate_dat_file(config_filename: str, output_filename: str, debug: bool = 
         print("\nGenerated .dat content:")
         print("".join(parts))
 
+    output_filename = f"test_case/final/output_seed_{seed}_K{K}_N{N}.dat"
     with open(output_filename, 'w') as f:
         f.write("".join(parts))
 
+    return output_filename
+
 
 if __name__ == "__main__":
+    k_list = [5, 10, 20]
+    n_list = [20, 30, 40]
     config_filename = "test_case/p.dat"
-    output_filename = "random_output1.dat"
-    generate_dat_file(config_filename, output_filename, debug=True)
+
+    for K in k_list:
+        for N in n_list:
+            seed = secrets.randbelow(2**12)
+            fname = generate_dat_file(config_filename, seed_override=seed, K_override=K, N_override=N, debug=True)
+            print(f"Generated {fname}")
