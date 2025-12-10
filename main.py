@@ -26,7 +26,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     if sys.argv[2].lower().strip() == "grasp" and len(sys.argv) < 5:
-        print(f"Usage: python {sys.argv[0]} <data_file> <mode> <grasp_type>")
+        print(f"Usage: python {sys.argv[0]} <data_file> <mode> <grasp_type> <exec_time>")
         print("  <grasp_type> : 'full' or 'elements'")
         print("  <exec_time> Execution time (in seconds) of the program")
         sys.exit(1)

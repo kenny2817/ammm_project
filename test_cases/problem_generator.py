@@ -78,7 +78,7 @@ def generate_dat_file(config_filename: str, seed_override: int | None = None, K_
         print("\nGenerated .dat content:")
         print("".join(parts))
 
-    output_filename = f"test_case/generated/output_seed_{seed}_K{K}_N{N}.dat"
+    output_filename = f"test_cases/generated/output_seed_{seed}_K{K}_N{N}.dat"
     with open(output_filename, 'w') as f:
         f.write("".join(parts))
 
@@ -86,12 +86,17 @@ def generate_dat_file(config_filename: str, seed_override: int | None = None, K_
 
 
 if __name__ == "__main__":
-    k_list = [5, 10, 20]
-    n_list = [20, 30, 40]
-    config_filename = "test_case/config.dat"
+    config_filename = "test_cases/config.dat"
+    fname = generate_dat_file(config_filename, debug=True)
+    print(f"Generated {fname}")
 
-    for K in k_list:
-        for N in n_list:
-            seed = secrets.randbelow(2**12)
-            fname = generate_dat_file(config_filename, seed_override=seed, K_override=K, N_override=N, debug=True)
-            print(f"Generated {fname}")
+    # To generate multiple test cases, uncomment the following lines, change as you wish k_list and n_list and execute this file
+    # k_list = [5, 10, 20]
+    # n_list = [20, 30, 40]
+    # config_filename = "test_cases/config.dat"
+
+    # for K in k_list:
+    #     for N in n_list:
+    #         seed = secrets.randbelow(2**12)
+    #         fname = generate_dat_file(config_filename, seed_override=seed, K_override=K, N_override=N, debug=True)
+    #         print(f"Generated {fname}")

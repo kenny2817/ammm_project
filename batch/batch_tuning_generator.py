@@ -21,7 +21,7 @@ baseline_entry = {
     "id": f"tuning_bl_{file_number}",
     "type": "opl",
     "model_file": "opl_models/p_01.mod",
-    "data_file": f"test_case/tuning_{file_number}.dat"
+    "data_file": f"test_cases/tuning_{file_number}.dat"
 }
 output_data.append(baseline_entry)
 
@@ -35,7 +35,7 @@ for exp in exponents:
         entry = {
             "id": f"tuning_{file_number}_{exp}_{alpha_suffix}",
             "type": "python",
-            "data_file": f"test_case/tuning_{file_number}.dat",
+            "data_file": f"test_cases/tuning_{file_number}.dat",
             "mode": "grasp",
             "grasp_type": "full",
             "exponent": exp,

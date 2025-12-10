@@ -5,11 +5,11 @@ import re
 # --- CONFIGURATION ---
 # The folder where your .dat files are located
 # (Make sure this path is correct relative to where you run this script)
-data_folder = "test_case/generated" 
+data_folder = "test_cases/generated" 
 
 # If you need the path in the JSON to look slightly different 
 # (e.g. "test_case" vs "test_cases"), change this. Otherwise leave it equal to data_folder.
-json_path_prefix = "test_case/generated" 
+json_path_prefix = "test_cases/generated" 
 
 output_data = []
 

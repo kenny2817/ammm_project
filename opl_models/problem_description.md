@@ -1,4 +1,4 @@
-# MILP formulation
+# ILP formulation
 
 ## Parameters
 
