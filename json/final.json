@@ -2,7 +2,7 @@
     {
         "id": "test1_greedy_basic_01",
         "type": "python",
-        "data_file": "test_case/final/output_seed_1807_K5_N30.dat",
+        "data_file": "test_case/generated/output_seed_1807_K5_N30.dat",
         "mode": "greedy",
         "exponent": 10,
         "alpha": 0.0
@@ -10,7 +10,7 @@
     {
         "id": "test1_grasp_full_01",
         "type": "python",
-        "data_file": "test_case/final/output_seed_1807_K5_N30.dat",
+        "data_file": "test_case/generated/output_seed_1807_K5_N30.dat",
         "mode": "grasp",
         "grasp_type": "full",
         "exponent": 2,
@@ -20,13 +20,13 @@
     {
         "id": "test1_cplex_opl_01",
         "type": "opl",
-        "model_file": "opl_models/p_01.mod",
-        "data_file": "test_case/final/output_seed_1807_K5_N30.dat"
+        "model_file": "opl_models/project_optimized.mod",
+        "data_file": "test_case/generated/output_seed_1807_K5_N30.dat"
     },
     {
         "id": "test2_greedy_basic_01",
         "type": "python",
-        "data_file": "test_case/final/output_seed_2726_K5_N20.dat",
+        "data_file": "test_case/generated/output_seed_2726_K5_N20.dat",
         "mode": "greedy",
         "exponent": 10,
         "alpha": 0.0
@@ -34,7 +34,7 @@
     {
         "id": "test2_grasp_full_01",
         "type": "python",
-        "data_file": "test_case/final/output_seed_2726_K5_N20.dat",
+        "data_file": "test_case/generated/output_seed_2726_K5_N20.dat",
         "mode": "grasp",
         "grasp_type": "full",
         "exponent": 2,
@@ -44,13 +44,13 @@
     {
         "id": "test2_cplex_opl_01",
         "type": "opl",
-        "model_file": "opl_models/p_01.mod",
-        "data_file": "test_case/final/output_seed_2726_K5_N20.dat"
+        "model_file": "opl_models/project_optimized.mod",
+        "data_file": "test_case/generated/output_seed_2726_K5_N20.dat"
     },
     {
         "id": "test3_greedy_basic_01",
         "type": "python",
-        "data_file": "test_case/final/output_seed_772_K5_N40.dat",
+        "data_file": "test_case/generated/output_seed_772_K5_N40.dat",
         "mode": "greedy",
         "exponent": 10,
         "alpha": 0.0
@@ -58,7 +58,7 @@
     {
         "id": "test3_grasp_full_01",
         "type": "python",
-        "data_file": "test_case/final/output_seed_772_K5_N40.dat",
+        "data_file": "test_case/generated/output_seed_772_K5_N40.dat",
         "mode": "grasp",
         "grasp_type": "full",
         "exponent": 2,
@@ -68,7 +68,7 @@
     {
         "id": "test3_cplex_opl_01",
         "type": "opl",
-        "model_file": "opl_models/p_01.mod",
-        "data_file": "test_case/final/output_seed_772_K5_N40.dat"
+        "model_file": "opl_models/project_optimized.mod",
+        "data_file": "test_case/generated/output_seed_772_K5_N40.dat"
     }
 ]

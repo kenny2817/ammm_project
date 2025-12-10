@@ -108,7 +108,7 @@ def run_opl_solver(config):
         print(f"OPL Error {config['id']}: {e}")
         return float('inf'), 0, False
 
-def execute_experiment_batch(config, iterations=3):
+def execute_experiment_batch(config, iterations=1):
     """
     Runs a single experiment configuration N times and aggregates stats.
     """
@@ -147,15 +147,16 @@ def execute_experiment_batch(config, iterations=3):
     )
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python batch.py <config_file.json> [max_workers]")
-        print("Example: python batch.py experiments.json 4")
+    if len(sys.argv) < 3:
+        print("Usage: python batch.py <config_file.json> <result_file.csv> [max_workers]")
+        print("Example: python batch.py experiments.json res.csv4")
         sys.exit(1)
 
     config_file = sys.argv[1]
+    output_file = sys.argv[2]
     
-    if len(sys.argv) >= 3:
-        max_workers = int(sys.argv[2])
+    if len(sys.argv) >= 4:
+        max_workers = int(sys.argv[3])
     else:
         # Default behavior: Use all available CPUs 
         max_workers = os.cpu_count()
@@ -182,8 +183,16 @@ def main():
                 results.append(res)
                 print(f"Finished: {res.test_id} | Avg Cost: {res.avg_cost:.2f} | Avg Time: {res.avg_time:.4f}s")
 
-    # Write Output to CSV
-    output_file = "batch_results_tuning_1.csv"
+    # Save results to CSV
+    output_folder = "results"
+    
+    # Create the folder if it doesn't exist
+    os.makedirs(output_folder, exist_ok=True)
+
+    # Combine folder and output_file to get the full path
+    output_file = os.path.join(output_folder, output_file)
+    
+    # Check if file exists at the new path
     file_exists = os.path.isfile(output_file) and os.path.getsize(output_file) > 0
 
     with open(output_file, 'a', newline='') as csvfile:

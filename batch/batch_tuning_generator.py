@@ -45,5 +45,5 @@ for exp in exponents:
         output_data.append(entry)
 
 # 3. Write to a file
-with open(f'config_tuning_{file_number}.json', 'w') as f:
+with open(f'json/config_tuning_{file_number}.json', 'w') as f:
     json.dump(output_data, f, indent=4)

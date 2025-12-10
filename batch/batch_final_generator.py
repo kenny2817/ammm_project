@@ -5,11 +5,11 @@ import re
 # --- CONFIGURATION ---
 # The folder where your .dat files are located
 # (Make sure this path is correct relative to where you run this script)
-data_folder = "test_case/final" 
+data_folder = "test_case/generated" 
 
 # If you need the path in the JSON to look slightly different 
 # (e.g. "test_case" vs "test_cases"), change this. Otherwise leave it equal to data_folder.
-json_path_prefix = "test_case/final" 
+json_path_prefix = "test_case/generated" 
 
 output_data = []
 
@@ -73,5 +73,5 @@ for filename in files:
         test_counter += 1
 
 #  Save to file
-with open('final_test_config.json', 'w') as f:
+with open('json/final_test_config.json', 'w') as f:
     json.dump(output_data, f, indent=4)
