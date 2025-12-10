@@ -20,12 +20,15 @@ df_new = pd.read_csv(io.StringIO(new_data), names=columns)
 def parse_testid(row):
     match = re.search(r'test_(\d+)_([a-zA-Z]+)_.*_K(\d+)_N(\d+)', row['TestID'])
     if match:
+        algo_name = match.group(2).upper()
+        if algo_name == 'OPL':
+            algo_name = 'CPLEX'
         return pd.Series({
             'TestNum': int(match.group(1)),
-            'Algorithm': match.group(2).upper(),
+            'Algorithm': algo_name,
             'K': int(match.group(3)),
             'N': int(match.group(4)),
-            'Label': f"Test {match.group(1)}\n(N={match.group(4)}, K={match.group(3)})"
+            'Label': f"K={match.group(3)}\nN={match.group(4)}"
         })
     return pd.Series([None, None, None, None, None])
 
@@ -34,18 +37,18 @@ df[['TestNum', 'Algorithm', 'K', 'N', 'Label']] = df.apply(parse_testid, axis=1)
 # 4. Process New Data
 # We parse it similarly, but then override the Algorithm name
 df_new[['TestNum', 'Algorithm', 'K', 'N', 'Label']] = df_new.apply(parse_testid, axis=1)
-df_new['Algorithm'] = 'OPL (Early)'
+df_new['Algorithm'] = 'CPLEX (Early)'
 
 # 5. Combine
 df_final = pd.concat([df, df_new], ignore_index=True)
-df_final.sort_values(by=['TestNum', 'K', 'N', 'Algorithm'], inplace=True)
+df_final.sort_values(by=['K', 'N', 'Algorithm'], inplace=True)
 
 # 6. Plot
 sns.set_theme(style="whitegrid")
-fig, axes = plt.subplots(2, 1, figsize=(14, 12))
+fig, axes = plt.subplots(2, 1, figsize=(14, 10))
 
 # Define Order
-hue_order = ['GREEDY', 'GRASP', 'OPL', 'OPL (Early)']
+hue_order = ['GREEDY', 'GRASP', 'CPLEX', 'CPLEX (Early)']
 # Define colors? Seaborn default 'viridis' or 'deep' or 'Set2' usually distinguishes 4 items well.
 # Let's use a specific palette to ensure OPL and OPL (Early) look distinct but nice.
 # 'tab10' is good for distinct categorical data.
@@ -63,6 +66,8 @@ sns.barplot(
     edgecolor='black',
     errorbar=None
 )
+axes[0].set_yscale('log')
+axes[0].grid(True, which="both", axis="y", linestyle='--', linewidth=0.5)
 axes[0].set_title('Average Cost Comparison', fontsize=14, fontweight='bold')
 axes[0].set_ylabel('Average Cost')
 axes[0].set_xlabel('')
